@@ -575,4 +575,120 @@ public class ElementTests
         Assert.True(col1Region.Right == col2Region.Left);
         Assert.True(col2Region.Right == col3Region.Left);
     }
+
+    // Edge Case Tests
+
+    [Fact]
+    public void EdgeCase_PercentageOfZeroSizedParent_BecomesZero()
+    {
+        var parent = new Element
+        {
+            Size = new Measure(new Length(0, Unit.Pixels), new Length(0, Unit.Pixels))
+        };
+
+        var child = new Element
+        {
+            Size = new Measure(new Length(50, Unit.Percent), new Length(100, Unit.Percent)),
+            Align = Alignment.TopLeft
+        };
+
+        parent.AddChild(child);
+        var region = child.GetAbsoluteRegion();
+
+        // 50% of 0 = 0, 100% of 0 = 0
+        Assert.Equal(0, region.Width);
+        Assert.Equal(0, region.Height);
+    }
+
+    [Fact]
+    public void EdgeCase_NegativeMargins_Allowed()
+    {
+        var parent = new Element
+        {
+            Size = new Measure(new Length(200, Unit.Pixels), new Length(200, Unit.Pixels))
+        };
+
+        var child = new Element
+        {
+            Size = new Measure(new Length(100, Unit.Pixels), new Length(100, Unit.Pixels)),
+            Margin = new Inset(
+                new Length(-10, Unit.Pixels),  // Negative left margin
+                new Length(-10, Unit.Pixels),  // Negative top margin
+                new Length(0, Unit.Pixels),
+                new Length(0, Unit.Pixels)
+            ),
+            Align = Alignment.TopLeft
+        };
+
+        parent.AddChild(child);
+        var region = child.GetAbsoluteRegion();
+
+        // Child extends beyond parent's top-left corner
+        Assert.Equal(-10, region.Left);
+        Assert.Equal(-10, region.Top);
+        Assert.Equal(90, region.Right);
+        Assert.Equal(90, region.Bottom);
+    }
+
+    [Fact]
+    public void EdgeCase_ElementLargerThanParent_ExtendsBeyon()
+    {
+        var parent = new Element
+        {
+            Size = new Measure(new Length(100, Unit.Pixels), new Length(100, Unit.Pixels))
+        };
+
+        var child = new Element
+        {
+            Size = new Measure(new Length(200, Unit.Pixels), new Length(200, Unit.Pixels)),
+            Align = Alignment.TopLeft
+        };
+
+        parent.AddChild(child);
+        var region = child.GetAbsoluteRegion();
+
+        // Child extends beyond parent boundaries (no clipping)
+        Assert.Equal(0, region.Left);
+        Assert.Equal(0, region.Top);
+        Assert.Equal(200, region.Width);
+        Assert.Equal(200, region.Height);
+    }
+
+    [Fact]
+    public void EdgeCase_OverlappingElements_CalculatedCorrectly()
+    {
+        var parent = new Element
+        {
+            Size = new Measure(new Length(200, Unit.Pixels), new Length(200, Unit.Pixels))
+        };
+
+        var child1 = new Element
+        {
+            Size = new Measure(new Length(100, Unit.Pixels), new Length(100, Unit.Pixels)),
+            Align = Alignment.TopLeft
+        };
+
+        var child2 = new Element
+        {
+            Size = new Measure(new Length(100, Unit.Pixels), new Length(100, Unit.Pixels)),
+            Margin = new Inset(new Length(50, Unit.Pixels), new Length(50, Unit.Pixels), new Length(0, Unit.Pixels), new Length(0, Unit.Pixels)),
+            Align = Alignment.TopLeft
+        };
+
+        parent.AddChild(child1);
+        parent.AddChild(child2);
+
+        var region1 = child1.GetAbsoluteRegion();
+        var region2 = child2.GetAbsoluteRegion();
+
+        // Child1: 0-100, Child2: 50-150 (they overlap in 50-100 range)
+        Assert.Equal(0, region1.Left);
+        Assert.Equal(100, region1.Right);
+        Assert.Equal(50, region2.Left);
+        Assert.Equal(150, region2.Right);
+
+        // Verify overlap exists
+        Assert.True(region1.Right > region2.Left);
+        Assert.True(region1.Bottom > region2.Top);
+    }
 }
