@@ -1,6 +1,6 @@
-﻿using System.Drawing;
+﻿namespace DailyMath.Core.Layout;
 
-namespace DailyMath.Core.Layout;
+using DailyMath.Core.Rendering;
 
 /// <summary>
 /// Contains debug visualization settings for an element.
