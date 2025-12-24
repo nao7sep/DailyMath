@@ -33,7 +33,17 @@ public class Table
     /// <summary>
     /// Gets the element at the specified row and column.
     /// </summary>
-    public Element this[int row, int column] => _cells[row, column];
+    public Element this[int row, int column]
+    {
+        get
+        {
+            if (row < 0 || row >= RowCount)
+                throw new ArgumentOutOfRangeException(nameof(row));
+            if (column < 0 || column >= ColumnCount)
+                throw new ArgumentOutOfRangeException(nameof(column));
+            return _cells[row, column];
+        }
+    }
 
     /// <summary>
     /// Calculates the region spanning multiple cells.

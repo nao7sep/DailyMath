@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMath", "src\DailyMath\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCore", "src\DailyMathCore\DailyMathCore.csproj", "{E4FB4574-794D-4844-BC02-322D611A65E4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathTests", "tests\DailyMathTests\DailyMathTests.csproj", "{DB75324F-31C1-4C3C-8689-52E17F4E0722}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +47,18 @@ Global
 		{E4FB4574-794D-4844-BC02-322D611A65E4}.Release|x64.Build.0 = Release|Any CPU
 		{E4FB4574-794D-4844-BC02-322D611A65E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{E4FB4574-794D-4844-BC02-322D611A65E4}.Release|x86.Build.0 = Release|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Debug|x64.Build.0 = Debug|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Debug|x86.Build.0 = Debug|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Release|x64.ActiveCfg = Release|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Release|x64.Build.0 = Release|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Release|x86.ActiveCfg = Release|Any CPU
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -50,5 +66,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{9E6B1E66-BF4C-4719-9053-18C09FFE389B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{E4FB4574-794D-4844-BC02-322D611A65E4} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{DB75324F-31C1-4C3C-8689-52E17F4E0722} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal
