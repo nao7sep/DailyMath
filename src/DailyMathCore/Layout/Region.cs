@@ -5,6 +5,13 @@
 /// Stores edges (Left, Top, Right, Bottom) as source of truth to ensure perfect alignment
 /// when adjacent elements share boundaries. Width and Height are calculated properties.
 /// Immutable result of layout calculation.
+///
+/// Design Rationale:
+/// - Edges as source of truth prevent floating-point drift in border collapse.
+/// - When two adjacent cells share an edge, they get the exact same coordinate value (bit-wise identical).
+/// - This ensures pixel-perfect borders when rendering: drawing all element borders naturally produces
+///   collapsed borders without gaps or overlaps.
+/// - Example: Left cell's Right = 100.0, right cell's Left = 100.0 (guaranteed identical).
 /// </summary>
 public readonly struct Region
 {

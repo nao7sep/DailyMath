@@ -4,6 +4,13 @@
 /// Represents a general-purpose layout element that can contain children.
 /// Supports flexible positioning via alignment, sizing in various units (including percentages),
 /// and a proper box model (margin outside, padding inside).
+///
+/// Design Philosophy:
+/// - Lazy calculation: GetAbsoluteRegion() calculates positions on-demand (not during construction).
+/// - Suitable for deterministic print layouts where paper dimensions are known upfront.
+/// - Supports adaptive layout selection (CSS @media-style): build different structures based on paper size,
+///   e.g., BuildWorksheet(paperWidth, paperHeight) can choose 2 vs 3 columns based on dimensions.
+/// - Calculations are cheap enough to rebuild entire hierarchies for different paper sizes.
 /// </summary>
 public class Element
 {
