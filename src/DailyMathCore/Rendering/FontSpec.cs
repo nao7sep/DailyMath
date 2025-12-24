@@ -17,7 +17,7 @@ public readonly struct FontSpec
     /// Gets the size of the font in Points (1/72 inch).
     /// This is the standard physical unit for typography.
     /// </summary>
-    public double SizePoints { get; }
+    public double SizeInPoints { get; }
 
     /// <summary>
     /// Gets the weight (thickness) of the strokes.
@@ -33,17 +33,17 @@ public readonly struct FontSpec
     /// Initializes a new instance of the <see cref="FontSpec"/> struct.
     /// </summary>
     /// <param name="family">The font family name.</param>
-    /// <param name="sizePoints">The size in points.</param>
+    /// <param name="sizeInPoints">The size in points.</param>
     /// <param name="weight">The font weight (default is Normal).</param>
     /// <param name="style">The font style flags (default is None).</param>
-    public FontSpec(string family, double sizePoints, FontWeight weight = FontWeight.Normal, FontStyle style = FontStyle.None)
+    public FontSpec(string family, double sizeInPoints, FontWeight weight = FontWeight.Normal, FontStyle style = FontStyle.None)
     {
         // Guard against invalid sizes (optional, but good practice)
-        if (sizePoints <= 0)
-            throw new ArgumentOutOfRangeException(nameof(sizePoints), "Font size must be positive.");
+        if (sizeInPoints <= 0)
+            throw new ArgumentOutOfRangeException(nameof(sizeInPoints), "Font size must be positive.");
 
         Family = family;
-        SizePoints = sizePoints;
+        SizeInPoints = sizeInPoints;
         Weight = weight;
         Style = style;
     }
@@ -53,21 +53,21 @@ public readonly struct FontSpec
     /// <summary>
     /// Creates a copy of this font with a different size.
     /// </summary>
-    public FontSpec WithSize(double sizePoints)
-        => new(Family, sizePoints, Weight, Style);
+    public FontSpec WithSize(double sizeInPoints)
+        => new(Family, sizeInPoints, Weight, Style);
 
     /// <summary>
     /// Creates a copy of this font with a different weight.
     /// </summary>
     public FontSpec WithWeight(FontWeight weight)
-        => new(Family, SizePoints, weight, Style);
+        => new(Family, SizeInPoints, weight, Style);
 
     /// <summary>
     /// Creates a copy of this font with a different style.
     /// Replaces the entire style set.
     /// </summary>
     public FontSpec WithStyle(FontStyle style)
-        => new(Family, SizePoints, Weight, style);
+        => new(Family, SizeInPoints, Weight, style);
 
     // --- Convenience Helpers ---
 
@@ -75,7 +75,7 @@ public readonly struct FontSpec
     /// Creates a copy of this font with the Bold weight (700) or Normal (400).
     /// </summary>
     public FontSpec AsBold(bool bold = true)
-        => new(Family, SizePoints, bold ? FontWeight.Bold : FontWeight.Normal, Style);
+        => new(Family, SizeInPoints, bold ? FontWeight.Bold : FontWeight.Normal, Style);
 
     /// <summary>
     /// Creates a copy of this font with the Italic flag added or removed.
@@ -83,7 +83,7 @@ public readonly struct FontSpec
     public FontSpec AsItalic(bool italic = true)
     {
         var newStyle = italic ? (Style | FontStyle.Italic) : (Style & ~FontStyle.Italic);
-        return new(Family, SizePoints, Weight, newStyle);
+        return new(Family, SizeInPoints, Weight, newStyle);
     }
 
     /// <summary>
@@ -91,7 +91,7 @@ public readonly struct FontSpec
     /// </summary>
     public override string ToString()
     {
-        var desc = $"{Family}, {SizePoints}pt";
+        var desc = $"{Family}, {SizeInPoints}pt";
         if (Weight != FontWeight.Normal) desc += $" {Weight}";
         if (Style != FontStyle.None) desc += $" {Style}";
         return desc;
