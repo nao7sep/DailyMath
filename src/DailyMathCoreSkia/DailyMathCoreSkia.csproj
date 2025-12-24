@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
 
     <!-- Explicitly set to use dotted namespace while keeping folder name dot-free -->
-    <RootNamespace>DailyMath.Rendering.Skia</RootNamespace>
+    <RootNamespace>DailyMath.Core.Skia</RootNamespace>
 
     <!-- Assembly Information -->
-    <AssemblyTitle>DailyMath Rendering Skia</AssemblyTitle>
+    <AssemblyTitle>DailyMath Core Skia</AssemblyTitle>
     <Product>DailyMath</Product>
-    <Description>SkiaSharp-based cross-platform rendering for DailyMath layout engine</Description>
+    <Description>SkiaSharp-based cross-platform rendering implementation for DailyMath Core</Description>
 
     <!-- Version Information - Keep these three in sync with DailyMath.csproj -->
     <Version>0.1.0</Version>
