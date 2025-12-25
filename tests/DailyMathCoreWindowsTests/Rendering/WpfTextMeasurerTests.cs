@@ -126,6 +126,16 @@ public class WpfTextMeasurerTests
     }
 
     [Fact]
+    public void MeasureText_OverlineStyle_DoesNotThrow()
+    {
+        var font = new FontSpec("Arial", 12, FontWeight.Normal, FontStyle.Overline);
+        var measure = _measurer.MeasureText("Hello", font, StandardDpi);
+
+        Assert.True(measure.Width.Value > 0);
+        Assert.True(measure.Height.Value > 0);
+    }
+
+    [Fact]
     public void MeasureText_CombinedStyles_DoesNotThrow()
     {
         var font = new FontSpec("Arial", 12, FontWeight.Bold, FontStyle.Italic | FontStyle.Underline);

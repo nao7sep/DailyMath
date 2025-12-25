@@ -4,6 +4,129 @@ using DailyMath.Core.Layout;
 
 public class LengthTests
 {
+    // Length Creation Tests (Extension Methods)
+
+    [Fact]
+    public void AsPixels_WithDouble_CreatesPixelLength()
+    {
+        var length = 100.5.AsPixels();
+
+        Assert.Equal(100.5, length.Value);
+        Assert.Equal(Unit.Pixels, length.Unit);
+    }
+
+    [Fact]
+    public void AsPixels_WithInt_CreatesPixelLength()
+    {
+        var length = 100.AsPixels();
+
+        Assert.Equal(100, length.Value);
+        Assert.Equal(Unit.Pixels, length.Unit);
+    }
+
+    [Fact]
+    public void AsPixels_WithZero_CreatesZeroPixelLength()
+    {
+        var length = 0.AsPixels();
+
+        Assert.Equal(0, length.Value);
+        Assert.Equal(Unit.Pixels, length.Unit);
+    }
+
+    [Fact]
+    public void AsPixels_WithNegative_CreatesNegativePixelLength()
+    {
+        var length = (-50).AsPixels();
+
+        Assert.Equal(-50, length.Value);
+        Assert.Equal(Unit.Pixels, length.Unit);
+    }
+
+    [Fact]
+    public void AsInches_WithDouble_CreatesInchLength()
+    {
+        var length = 8.5.AsInches();
+
+        Assert.Equal(8.5, length.Value);
+        Assert.Equal(Unit.Inches, length.Unit);
+    }
+
+    [Fact]
+    public void AsInches_WithInt_CreatesInchLength()
+    {
+        var length = 11.AsInches();
+
+        Assert.Equal(11, length.Value);
+        Assert.Equal(Unit.Inches, length.Unit);
+    }
+
+    [Fact]
+    public void AsMillimeters_WithDouble_CreatesMillimeterLength()
+    {
+        var length = 210.5.AsMillimeters();
+
+        Assert.Equal(210.5, length.Value);
+        Assert.Equal(Unit.Millimeters, length.Unit);
+    }
+
+    [Fact]
+    public void AsMillimeters_WithInt_CreatesMillimeterLength()
+    {
+        var length = 297.AsMillimeters();
+
+        Assert.Equal(297, length.Value);
+        Assert.Equal(Unit.Millimeters, length.Unit);
+    }
+
+    [Fact]
+    public void AsPercent_WithDouble_CreatesPercentLength()
+    {
+        var length = 50.5.AsPercent();
+
+        Assert.Equal(50.5, length.Value);
+        Assert.Equal(Unit.Percent, length.Unit);
+    }
+
+    [Fact]
+    public void AsPercent_WithInt_CreatesPercentLength()
+    {
+        var length = 100.AsPercent();
+
+        Assert.Equal(100, length.Value);
+        Assert.Equal(Unit.Percent, length.Unit);
+    }
+
+    [Fact]
+    public void AsPercent_WithZero_CreatesZeroPercentLength()
+    {
+        var length = 0.AsPercent();
+
+        Assert.Equal(0, length.Value);
+        Assert.Equal(Unit.Percent, length.Unit);
+    }
+
+    [Fact]
+    public void ExtensionMethods_UsedInMeasureConstructor_WorkCorrectly()
+    {
+        var measure = new Measure(100.AsPixels(), 200.AsPixels());
+
+        Assert.Equal(100, measure.Width.Value);
+        Assert.Equal(200, measure.Height.Value);
+        Assert.Equal(Unit.Pixels, measure.Width.Unit);
+        Assert.Equal(Unit.Pixels, measure.Height.Unit);
+    }
+
+    [Fact]
+    public void ExtensionMethods_UsedInInsetConstructor_WorkCorrectly()
+    {
+        var inset = new Inset(10.AsPixels(), 20.AsPixels(), 30.AsPixels(), 40.AsPixels());
+
+        Assert.Equal(10, inset.Left.Value);
+        Assert.Equal(20, inset.Top.Value);
+        Assert.Equal(30, inset.Right.Value);
+        Assert.Equal(40, inset.Bottom.Value);
+    }
+
     // Unit Conversion Tests
 
     [Fact]
@@ -64,6 +187,21 @@ public class LengthTests
     }
 
     [Fact]
+    public void ToInches_WithPixels_RequiresDpi()
+    {
+        var length = new Length(96, Unit.Pixels);
+        Assert.Equal(1.0, length.ToInches(dpi: 96), precision: 10);
+        Assert.Equal(0.32, length.ToInches(dpi: 300), precision: 10);
+    }
+
+    [Fact]
+    public void ToInches_WithPixels_ThrowsWhenDpiNull()
+    {
+        var length = new Length(96, Unit.Pixels);
+        Assert.Throws<ArgumentNullException>(() => length.ToInches());
+    }
+
+    [Fact]
     public void ToMillimeters_WithMillimeters_ReturnsValue()
     {
         var length = new Length(100, Unit.Millimeters);
@@ -75,6 +213,20 @@ public class LengthTests
     {
         var length = new Length(1, Unit.Inches);
         Assert.Equal(25.4, length.ToMillimeters(), precision: 10);
+    }
+
+    [Fact]
+    public void ToMillimeters_WithPixels_RequiresDpi()
+    {
+        var length = new Length(96, Unit.Pixels);
+        Assert.Equal(25.4, length.ToMillimeters(dpi: 96), precision: 10);
+    }
+
+    [Fact]
+    public void ToMillimeters_WithPixels_ThrowsWhenDpiNull()
+    {
+        var length = new Length(96, Unit.Pixels);
+        Assert.Throws<ArgumentNullException>(() => length.ToMillimeters());
     }
 
     [Fact]

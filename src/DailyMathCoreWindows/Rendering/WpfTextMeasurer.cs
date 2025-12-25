@@ -158,7 +158,7 @@ public class WpfTextMeasurer : ITextMeasurer
     }
 
     /// <summary>
-    /// Applies text decorations (underline, strikethrough) to FormattedText.
+    /// Applies text decorations (underline, strikethrough, overline) to FormattedText.
     /// </summary>
     private static void ApplyTextDecorations(FormattedText formattedText, Core.Rendering.FontStyle style)
     {
@@ -170,6 +170,10 @@ public class WpfTextMeasurer : ITextMeasurer
         if (style.HasFlag(Core.Rendering.FontStyle.Strikethrough))
         {
             decorations.Add(TextDecorations.Strikethrough);
+        }
+        if (style.HasFlag(Core.Rendering.FontStyle.Overline))
+        {
+            decorations.Add(TextDecorations.OverLine);
         }
         if (decorations.Count > 0)
         {
