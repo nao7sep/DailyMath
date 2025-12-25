@@ -13,6 +13,12 @@ namespace DailyMath.Core.Windows;
 /// </summary>
 public class WpfTextMeasurer : ITextMeasurer
 {
+    /// <summary>
+    /// WPF's standard DIP (Device Independent Pixel) resolution.
+    /// WPF internally uses 96 DPI as the baseline for device-independent units.
+    /// </summary>
+    private const double WpfDipResolution = 96.0;
+
     /// <inheritdoc />
     public Measure MeasureText(string text, FontSpec font, double dpi)
     {
@@ -93,19 +99,22 @@ public class WpfTextMeasurer : ITextMeasurer
             FontStretches.Normal
         );
 
-        // 2. Convert Points to Pixels
-        // FormattedText expects size in device-independent pixels (1/96 inch)
-        // Formula: DIPs = Points * (96 / 72)
-        double emSize = spec.SizeInPoints * (96.0 / FontSpec.PointsPerInch);
+        // 2. Convert Points to DIPs (Device Independent Pixels)
+        // FormattedText expects size in DIPs (WPF's 96 DPI baseline)
+        // Formula: DIPs = Points * (WpfDipResolution / PointsPerInch)
+        double emSize = spec.SizeInPoints * (WpfDipResolution / FontSpec.PointsPerInch);
 
         // 3. Scale for actual DPI
-        // pixelsPerDip converts from 96 DPI to target DPI
-        double pixelsPerDip = dpi / 96.0;
+        // pixelsPerDip converts from WPF's 96 DPI baseline to target DPI
+        // For 300 DPI printing: 300/96 = 3.125x scaling
+        double pixelsPerDip = dpi / WpfDipResolution;
 
         // 4. Create FormattedText
+        // Use InvariantCulture for culture-independent measurement
+        // The text content itself already has its own culture context
         var formattedText = new FormattedText(
             text,
-            CultureInfo.CurrentCulture,
+            CultureInfo.InvariantCulture,
             FlowDirection.LeftToRight,
             typeface,
             emSize,
