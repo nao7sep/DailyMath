@@ -28,7 +28,7 @@
     <RepositoryUrl>https://github.com/nao7sep/DailyMath</RepositoryUrl>
 
     <!-- Localization -->
-    <NeutralLanguage>en</NeutralLanguage>
+    <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>

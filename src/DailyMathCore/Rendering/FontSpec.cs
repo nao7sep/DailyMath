@@ -9,6 +9,11 @@ namespace DailyMath.Core.Rendering;
 public readonly struct FontSpec
 {
     /// <summary>
+    /// The number of Points per inch. This is a universal constant in digital typography.
+    /// </summary>
+    public const double PointsPerInch = 72.0;
+
+    /// <summary>
     /// Gets the font family name (e.g., "Arial", "Consolas").
     /// </summary>
     public string Family { get; }

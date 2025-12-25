@@ -21,19 +21,18 @@ public class SkiaTextMeasurer : ITextMeasurer
             return new Measure(0.AsPixels(), 0.AsPixels());
 
         using var skFont = CreateFont(font, dpi);
-        using var paint = new SKPaint();
 
         // 1. Measure Width
         // Skia measures accurate horizontal advance
         float width = skFont.MeasureText(text);
 
         // 2. Measure Height
-        // We use FontMetrics to get the standard line height (Ascent + Descent)
-        // This ensures the box is tall enough for the tallest characters in the font
+        // We use Descent - Ascent for tight bounding box (no leading/line gap).
+        // This gives precise glyph height, better for layout engines with explicit spacing control.
+        // Note: Ascent is negative (up), Descent is positive (down).
+        // Leading is intentionally excluded - spacing should be controlled via Element padding.
         SKFontMetrics metrics = skFont.Metrics;
         float height = metrics.Descent - metrics.Ascent;
-        // Note: Ascent is usually negative (up), Descent is positive (down).
-        // So (Descent - Ascent) = (Positive - Negative) = Total Height.
 
         return new Measure(
             Math.Ceiling(width).AsPixels(),
@@ -57,18 +56,31 @@ public class SkiaTextMeasurer : ITextMeasurer
         double low = minSizeInPoints;
         double high = maxSizeInPoints;
 
-        // 2. Binary Search
+        // Create font once - we'll update its size in the loop
+        using var typeface = CreateTypeface(baseFont);
+        using var skFont = new SKFont(typeface)
+        {
+            Subpixel = true
+        };
+
+        // 2. Binary Search (typically 12-13 iterations for 6-72pt range)
         // Continue until precision is better than 0.01pt (sub-pixel accuracy at typical DPIs)
         while (high - low > 0.01)
         {
             double mid = (low + high) / 2.0;
 
-            // Reuse MeasureText logic
-            Measure measured = MeasureText(text, baseFont.WithSize(mid), dpi);
+            // Update font size for this iteration
+            skFont.Size = (float)(mid * (dpi / FontSpec.PointsPerInch));
 
-            // Note: measured.Width.Value and measured.Height.Value are in pixels
-            // because MeasureText returns Measure with pixel Lengths
-            if (measured.Width.Value <= maxWidthPx && measured.Height.Value <= maxHeightPx)
+            // Measure with current size
+            float width = skFont.MeasureText(text);
+            SKFontMetrics metrics = skFont.Metrics;
+            float height = metrics.Descent - metrics.Ascent;
+
+            // Check if it fits
+            bool fits = (Math.Ceiling(width) <= maxWidthPx) && (Math.Ceiling(height) <= maxHeightPx);
+
+            if (fits)
             {
                 // It fits! Try going larger.
                 low = mid;
@@ -91,6 +103,27 @@ public class SkiaTextMeasurer : ITextMeasurer
     /// </summary>
     private SKFont CreateFont(FontSpec spec, double dpi)
     {
+        var typeface = CreateTypeface(spec);
+
+        // Convert Size (Points -> Pixels)
+        // Formula: Pixels = Points * (DPI / PointsPerInch)
+        // SKFont expects Size in PIXELS.
+        float pixelSize = (float)(spec.SizeInPoints * (dpi / FontSpec.PointsPerInch));
+
+        var font = new SKFont(typeface, pixelSize)
+        {
+            Subpixel = true
+        };
+
+        return font;
+    }
+
+    /// <summary>
+    /// Creates an SKTypeface from FontSpec (family, weight, style).
+    /// Reusable for multiple font sizes.
+    /// </summary>
+    private SKTypeface CreateTypeface(FontSpec spec)
+    {
         // 1. Convert 100-900 Weight to Skia Weight
         // Skia uses the same 100-900 scale, so we can cast directly!
         var skWeight = (SKFontStyleWeight)(int)spec.Weight;
@@ -103,19 +136,6 @@ public class SkiaTextMeasurer : ITextMeasurer
         // 3. Load Typeface
         // SKFontStyle.Width.Normal is standard width (not condensed/expanded)
         var skStyle = new SKFontStyle(skWeight, SKFontStyleWidth.Normal, skSlant);
-        var typeface = SKTypeface.FromFamilyName(spec.Family, skStyle);
-
-        // 4. Convert Size (Points -> Pixels)
-        // Formula: Pixels = Points * (DPI / 72)
-        // SKFont expects Size in PIXELS.
-        float pixelSize = (float)(spec.SizeInPoints * (dpi / 72.0));
-
-        // 5. Create Font
-        var font = new SKFont(typeface, pixelSize)
-        {
-            Subpixel = true
-        };
-
-        return font;
+        return SKTypeface.FromFamilyName(spec.Family, skStyle);
     }
 }
