@@ -4,7 +4,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
 
     <!-- Explicitly set to use dotted namespace while keeping folder name dot-free -->
     <RootNamespace>DailyMath.Core.Windows</RootNamespace>

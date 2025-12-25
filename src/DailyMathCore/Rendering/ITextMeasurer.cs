@@ -12,6 +12,7 @@ public interface ITextMeasurer
     /// Measures the exact bounding box of the text if rendered with the specified font and DPI.
     /// DPI is required because font sizes are specified in Points (physical units),
     /// but measurements must be returned in pixels for layout calculations.
+    /// Supports single-line text only - newlines are treated as regular characters.
     /// </summary>
     /// <param name="text">The text to measure.</param>
     /// <param name="font">The font specification.</param>
@@ -24,6 +25,7 @@ public interface ITextMeasurer
     /// to fit completely within the specified bounds.
     /// DPI is required because bounds are in pixels, but font sizes are in Points.
     /// Implementations should use binary search for efficiency.
+    /// Supports single-line text only - newlines are treated as regular characters.
     /// </summary>
     /// <param name="text">The text to fit.</param>
     /// <param name="baseFont">The font configuration (Family, Weight, Style). Size is ignored.</param>
