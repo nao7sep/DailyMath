@@ -20,30 +20,6 @@ public class WpfTextMeasurer : ITextMeasurer
     private const double WpfDipResolution = 96.0;
 
     /// <summary>
-    /// Creates a Typeface from FontSpec (family, weight, style).
-    /// Reusable for multiple font sizes.
-    /// </summary>
-    public static Typeface CreateTypeface(FontSpec spec)
-    {
-        return new Typeface(
-            new FontFamily(spec.Family),
-            ConvertToFontStyle(spec.Style),
-            ConvertToFontWeight(spec.Weight),
-            FontStretches.Normal
-        );
-    }
-
-    /// <summary>
-    /// Converts font size from points to DIPs (Device Independent Pixels).
-    /// FormattedText expects size in DIPs (WPF's 96 DPI baseline).
-    /// Formula: DIPs = Points * (WpfDipResolution / PointsPerInch)
-    /// </summary>
-    public static double CalculateDipSize(double sizeInPoints)
-    {
-        return sizeInPoints * (WpfDipResolution / FontSpec.PointsPerInch);
-    }
-
-    /// <summary>
     /// Converts FontWeight enum (100-900) to WPF FontWeight.
     /// </summary>
     public static System.Windows.FontWeight ConvertToFontWeight(Core.Rendering.FontWeight weight)
@@ -75,6 +51,30 @@ public class WpfTextMeasurer : ITextMeasurer
     }
 
     /// <summary>
+    /// Converts font size from points to DIPs (Device Independent Pixels).
+    /// FormattedText expects size in DIPs (WPF's 96 DPI baseline).
+    /// Formula: DIPs = Points * (WpfDipResolution / PointsPerInch)
+    /// </summary>
+    public static double CalculateDipSize(double sizeInPoints)
+    {
+        return sizeInPoints * (WpfDipResolution / FontSpec.PointsPerInch);
+    }
+
+    /// <summary>
+    /// Creates a Typeface from FontSpec (family, weight, style).
+    /// Reusable for multiple font sizes.
+    /// </summary>
+    public static Typeface CreateTypeface(FontSpec spec)
+    {
+        return new Typeface(
+            new FontFamily(spec.Family),
+            ConvertToFontStyle(spec.Style),
+            ConvertToFontWeight(spec.Weight),
+            FontStretches.Normal
+        );
+    }
+
+    /// <summary>
     /// Creates a FormattedText instance with the specified text and font.
     /// Converts Points to Pixels using DPI for accurate measurement.
     /// </summary>
@@ -84,6 +84,16 @@ public class WpfTextMeasurer : ITextMeasurer
         double emSize = CalculateDipSize(spec.SizeInPoints);
         double pixelsPerDip = dpi / WpfDipResolution;
 
+        return CreateFormattedText(text, typeface, emSize, pixelsPerDip, spec.Style);
+    }
+
+    /// <summary>
+    /// Creates a FormattedText instance with pre-created typeface and DPI settings.
+    /// Overload for performance when creating multiple FormattedText instances with the same typeface.
+    /// </summary>
+    public static FormattedText CreateFormattedText(string text, Typeface typeface, double emSize,
+        double pixelsPerDip, Core.Rendering.FontStyle style)
+    {
         var formattedText = new FormattedText(
             text,
             CultureInfo.InvariantCulture,
@@ -94,7 +104,7 @@ public class WpfTextMeasurer : ITextMeasurer
             pixelsPerDip
         );
 
-        ApplyTextDecorations(formattedText, spec.Style);
+        ApplyTextDecorations(formattedText, style);
         return formattedText;
     }
 
@@ -104,11 +114,17 @@ public class WpfTextMeasurer : ITextMeasurer
         if (string.IsNullOrEmpty(text))
             return new Measure(0.AsPixels(), 0.AsPixels());
 
+        if (dpi <= 0 || double.IsNaN(dpi) || double.IsInfinity(dpi))
+            throw new ArgumentOutOfRangeException(nameof(dpi), $"DPI must be a positive finite number. Got: {dpi}");
+
         var formattedText = CreateFormattedText(text, font, dpi);
 
+        // Use Height (tight bounding box: ascent to descent) instead of Extent (includes line gap/leading).
+        // This matches SkiaSharp's behavior where leading is intentionally excluded.
+        // Spacing should be controlled via Element padding, not built into measurements.
         return new Measure(
             Math.Ceiling(formattedText.Width).AsPixels(),
-            Math.Ceiling(formattedText.Extent).AsPixels()
+            Math.Ceiling(formattedText.Height).AsPixels()
         );
     }
 
@@ -123,25 +139,40 @@ public class WpfTextMeasurer : ITextMeasurer
         if (minSizeInPoints > maxSizeInPoints)
             throw new ArgumentException($"Minimum size ({minSizeInPoints}) cannot be greater than maximum size ({maxSizeInPoints}).");
 
+        if (dpi <= 0 || double.IsNaN(dpi) || double.IsInfinity(dpi))
+            throw new ArgumentOutOfRangeException(nameof(dpi), $"DPI must be a positive finite number. Got: {dpi}");
+
         // 1. Resolve bounds to absolute pixels for fast comparison
         double maxWidthPx = bounds.Width.ToPixels(dpi: dpi);
         double maxHeightPx = bounds.Height.ToPixels(dpi: dpi);
 
+        // Validate resolved bounds
+        if (maxWidthPx <= 0 || maxHeightPx <= 0 ||
+            double.IsNaN(maxWidthPx) || double.IsNaN(maxHeightPx) ||
+            double.IsInfinity(maxWidthPx) || double.IsInfinity(maxHeightPx))
+        {
+            throw new ArgumentException($"Bounds must resolve to positive finite pixels. Got: Width={maxWidthPx}px, Height={maxHeightPx}px");
+        }
+
         double low = minSizeInPoints;
         double high = maxSizeInPoints;
+
+        // Create typeface once for reuse (same family/weight/style throughout)
+        var typeface = CreateTypeface(baseFont);
+        double pixelsPerDip = dpi / WpfDipResolution;
 
         // 2. Binary Search (typically 12-13 iterations for 6-72pt range)
         // Continue until precision is better than 0.01pt (sub-pixel accuracy at typical DPIs)
         while (high - low > 0.01)
         {
             double mid = (low + high) / 2.0;
+            double emSize = CalculateDipSize(mid);
 
-            // Measure with the candidate size
-            var testFont = baseFont.WithSize(mid);
-            var formattedText = CreateFormattedText(text, testFont, dpi);
+            // Create FormattedText using helper (reusing typeface and pixelsPerDip for performance)
+            var formattedText = CreateFormattedText(text, typeface, emSize, pixelsPerDip, baseFont.Style);
 
-            // Check if it fits
-            if (FitsInBounds(formattedText.Width, formattedText.Extent, maxWidthPx, maxHeightPx))
+            // Use Height (tight bounding box) instead of Extent (includes leading) for consistency
+            if (FitsInBounds(formattedText.Width, formattedText.Height, maxWidthPx, maxHeightPx))
             {
                 // It fits! Try going larger.
                 low = mid;

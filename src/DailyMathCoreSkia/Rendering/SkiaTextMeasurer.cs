@@ -12,6 +12,27 @@ namespace DailyMath.Core.Skia;
 public class SkiaTextMeasurer : ITextMeasurer
 {
     /// <summary>
+    /// Converts font size from points to pixels based on DPI.
+    /// Formula: Pixels = Points * (DPI / PointsPerInch)
+    /// </summary>
+    public static float CalculatePixelSize(double sizeInPoints, double dpi)
+    {
+        return (float)(sizeInPoints * (dpi / FontSpec.PointsPerInch));
+    }
+
+    /// <summary>
+    /// Calculates tight bounding box height (no leading/line gap).
+    /// Uses Descent - Ascent for precise glyph height.
+    /// Note: Ascent is negative (up), Descent is positive (down).
+    /// Leading is intentionally excluded - spacing should be controlled via Element padding.
+    /// </summary>
+    public static float CalculateHeight(SKFont font)
+    {
+        SKFontMetrics metrics = font.Metrics;
+        return metrics.Descent - metrics.Ascent;
+    }
+
+    /// <summary>
     /// Creates an SKTypeface from FontSpec (family, weight, style).
     /// Reusable for multiple font sizes.
     /// </summary>
@@ -33,15 +54,6 @@ public class SkiaTextMeasurer : ITextMeasurer
     }
 
     /// <summary>
-    /// Converts font size from points to pixels based on DPI.
-    /// Formula: Pixels = Points * (DPI / PointsPerInch)
-    /// </summary>
-    public static float CalculatePixelSize(double sizeInPoints, double dpi)
-    {
-        return (float)(sizeInPoints * (dpi / FontSpec.PointsPerInch));
-    }
-
-    /// <summary>
     /// Creates an SKFont with proper settings for text measurement.
     /// SKFont expects Size in PIXELS.
     /// </summary>
@@ -51,23 +63,14 @@ public class SkiaTextMeasurer : ITextMeasurer
         return new SKFont(typeface, pixelSize) { Subpixel = true };
     }
 
-    /// <summary>
-    /// Calculates tight bounding box height (no leading/line gap).
-    /// Uses Descent - Ascent for precise glyph height.
-    /// Note: Ascent is negative (up), Descent is positive (down).
-    /// Leading is intentionally excluded - spacing should be controlled via Element padding.
-    /// </summary>
-    public static float CalculateHeight(SKFont font)
-    {
-        SKFontMetrics metrics = font.Metrics;
-        return metrics.Descent - metrics.Ascent;
-    }
-
     /// <inheritdoc />
     public Measure MeasureText(string text, FontSpec font, double dpi)
     {
         if (string.IsNullOrEmpty(text))
             return new Measure(0.AsPixels(), 0.AsPixels());
+
+        if (dpi <= 0 || double.IsNaN(dpi) || double.IsInfinity(dpi))
+            throw new ArgumentOutOfRangeException(nameof(dpi), $"DPI must be a positive finite number. Got: {dpi}");
 
         using var typeface = CreateTypeface(font);
         using var skFont = CreateSKFont(typeface, font.SizeInPoints, dpi);
@@ -92,9 +95,20 @@ public class SkiaTextMeasurer : ITextMeasurer
         if (minSizeInPoints > maxSizeInPoints)
             throw new ArgumentException($"Minimum size ({minSizeInPoints}) cannot be greater than maximum size ({maxSizeInPoints}).");
 
+        if (dpi <= 0 || double.IsNaN(dpi) || double.IsInfinity(dpi))
+            throw new ArgumentOutOfRangeException(nameof(dpi), $"DPI must be a positive finite number. Got: {dpi}");
+
         // 1. Resolve bounds to absolute pixels
         double maxWidthPx = bounds.Width.ToPixels(dpi: dpi);
         double maxHeightPx = bounds.Height.ToPixels(dpi: dpi);
+
+        // Validate resolved bounds
+        if (maxWidthPx <= 0 || maxHeightPx <= 0 ||
+            double.IsNaN(maxWidthPx) || double.IsNaN(maxHeightPx) ||
+            double.IsInfinity(maxWidthPx) || double.IsInfinity(maxHeightPx))
+        {
+            throw new ArgumentException($"Bounds must resolve to positive finite pixels. Got: Width={maxWidthPx}px, Height={maxHeightPx}px");
+        }
 
         double low = minSizeInPoints;
         double high = maxSizeInPoints;
