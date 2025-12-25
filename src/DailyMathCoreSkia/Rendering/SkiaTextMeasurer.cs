@@ -64,6 +64,9 @@ public class SkiaTextMeasurer : ITextMeasurer
         if (string.IsNullOrEmpty(text))
             return maxSizeInPoints;
 
+        if (minSizeInPoints > maxSizeInPoints)
+            throw new ArgumentException($"Minimum size ({minSizeInPoints}) cannot be greater than maximum size ({maxSizeInPoints}).");
+
         // 1. Resolve bounds to absolute pixels
         double maxWidthPx = bounds.Width.ToPixels(dpi: dpi);
         double maxHeightPx = bounds.Height.ToPixels(dpi: dpi);

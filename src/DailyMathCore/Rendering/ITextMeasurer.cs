@@ -29,7 +29,7 @@ public interface ITextMeasurer
     /// </summary>
     /// <param name="text">The text to fit.</param>
     /// <param name="baseFont">The font configuration (Family, Weight, Style). Size is ignored.</param>
-    /// <param name="bounds">The maximum available width and height. To constrain only one dimension, set the other to a very large value (e.g., double.MaxValue).</param>
+    /// <param name="bounds">The maximum available width and height. To constrain only one dimension, set the other to a very large value (e.g., 10000 pixels).</param>
     /// <param name="dpi">The rendering context DPI (converts Points to pixels).</param>
     /// <param name="minSizeInPoints">The minimum font size to check (default 6pt - typical minimum readable size).</param>
     /// <param name="maxSizeInPoints">The maximum font size to check (default 72pt - 1 inch, typical document maximum).</param>

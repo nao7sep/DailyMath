@@ -61,6 +61,41 @@ public class FontSpecTests
     }
 
     [Fact]
+    public void Constructor_NaNSize_ThrowsArgumentOutOfRangeException()
+    {
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new FontSpec("Arial", double.NaN));
+        Assert.Equal("sizeInPoints", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_InfinitySize_ThrowsArgumentOutOfRangeException()
+    {
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new FontSpec("Arial", double.PositiveInfinity));
+        Assert.Equal("sizeInPoints", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_NullFamily_ThrowsArgumentException()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new FontSpec(null!, 12));
+        Assert.Equal("family", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_EmptyFamily_ThrowsArgumentException()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new FontSpec("", 12));
+        Assert.Equal("family", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WhitespaceFamily_ThrowsArgumentException()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => new FontSpec("   ", 12));
+        Assert.Equal("family", ex.ParamName);
+    }
+
+    [Fact]
     public void PointsPerInch_IsStandardTypographicConstant()
     {
         Assert.Equal(72.0, FontSpec.PointsPerInch);
@@ -332,6 +367,24 @@ public class FontSpecTests
     }
 
     [Fact]
+    public void Equals_SameValues_ReturnsTrue()
+    {
+        var font1 = new FontSpec("Arial", 12, FontWeight.Bold, FontStyle.Italic);
+        var font2 = new FontSpec("Arial", 12, FontWeight.Bold, FontStyle.Italic);
+
+        Assert.Equal(font1, font2);
+    }
+
+    [Fact]
+    public void Equals_DifferentValues_ReturnsFalse()
+    {
+        var font1 = new FontSpec("Arial", 12);
+        var font2 = new FontSpec("Consolas", 12);
+
+        Assert.NotEqual(font1, font2);
+    }
+
+    [Fact]
     public void Immutability_ModificationsDoNotAffectOriginal()
     {
         var original = new FontSpec("Arial", 12, FontWeight.Normal, FontStyle.None);
@@ -352,39 +405,5 @@ public class FontSpecTests
         Assert.NotEqual(original.Weight, modified2.Weight);
         Assert.NotEqual(original.Style, modified3.Style);
         Assert.NotEqual(original.Weight, modified4.Weight);
-    }
-
-    [Fact]
-    public void Equals_SameValues_ReturnsTrue()
-    {
-        var font1 = new FontSpec("Arial", 12, FontWeight.Bold, FontStyle.Italic);
-        var font2 = new FontSpec("Arial", 12, FontWeight.Bold, FontStyle.Italic);
-
-        Assert.Equal(font1, font2);
-    }
-
-    [Fact]
-    public void Equals_DifferentValues_ReturnsFalse()
-    {
-        var font1 = new FontSpec("Arial", 12);
-        var font2 = new FontSpec("Consolas", 12);
-
-        Assert.NotEqual(font1, font2);
-    }
-
-    [Fact]
-    public void Constructor_NullFamily_DoesNotThrow()
-    {
-        // Currently allowed by struct, though perhaps not ideal.
-        // Verifying it doesn't crash the constructor.
-        var font = new FontSpec(null!, 12);
-        Assert.Null(font.Family);
-    }
-
-    [Fact]
-    public void Constructor_NaNSize_ThrowsArgumentOutOfRangeException()
-    {
-        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new FontSpec("Arial", double.NaN));
-        Assert.Equal("sizeInPoints", ex.ParamName);
     }
 }

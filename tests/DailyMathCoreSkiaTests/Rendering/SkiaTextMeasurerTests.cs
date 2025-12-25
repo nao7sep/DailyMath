@@ -365,18 +365,18 @@ public class SkiaTextMeasurerTests
     }
 
     [Fact]
-    public void GetMaxFontSize_MinSizeGreaterThanMaxSize_ReturnsMinSize()
+    public void GetMaxFontSize_MinGreaterThanMax_ThrowsArgumentException()
     {
         var baseFont = new FontSpec("Arial", 12);
         var text = "Test";
         var bounds = new Measure(100.AsPixels(), 50.AsPixels());
 
-        // Invalid range: min (20) > max (10)
-        // Loop condition (high - low > 0.01) will be false immediately (10 - 20 = -10).
-        // Should return low (which starts at min).
-        var result = _measurer.GetMaxFontSize(text, baseFont, bounds, StandardDpi, minSizeInPoints: 20, maxSizeInPoints: 10);
+        // Invalid range: min > max should throw
+        var exception = Assert.Throws<ArgumentException>(() =>
+            _measurer.GetMaxFontSize(text, baseFont, bounds, StandardDpi, minSizeInPoints: 20, maxSizeInPoints: 10));
 
-        Assert.Equal(20, result);
+        Assert.Contains("Minimum size", exception.Message);
+        Assert.Contains("cannot be greater than", exception.Message);
     }
 
     [Fact]

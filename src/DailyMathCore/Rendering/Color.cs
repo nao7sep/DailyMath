@@ -34,14 +34,13 @@ public readonly struct Color : IEquatable<Color>
     public static Color Orange => new(255, 165, 0);
     public static Color Purple => new(128, 0, 128);
 
+    // --- Formatting ---
+
     public override string ToString() => A == 255
         ? $"#{R:X2}{G:X2}{B:X2}"
         : $"#{R:X2}{G:X2}{B:X2}{A:X2}";
 
-    public override bool Equals(object? obj)
-    {
-        return obj is Color color && Equals(color);
-    }
+    // --- Equality ---
 
     public bool Equals(Color other)
     {
@@ -49,6 +48,11 @@ public readonly struct Color : IEquatable<Color>
                G == other.G &&
                B == other.B &&
                A == other.A;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is Color color && Equals(color);
     }
 
     public override int GetHashCode()

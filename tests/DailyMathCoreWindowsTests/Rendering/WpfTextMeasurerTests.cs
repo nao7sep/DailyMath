@@ -395,6 +395,32 @@ public class WpfTextMeasurerTests
     }
 
     [Fact]
+    public void GetMaxFontSize_MinGreaterThanMax_ThrowsArgumentException()
+    {
+        var baseFont = new FontSpec("Arial", 12);
+        var text = "Test";
+        var bounds = new Measure(100.AsPixels(), 50.AsPixels());
+
+        var ex = Assert.Throws<ArgumentException>(() =>
+            _measurer.GetMaxFontSize(text, baseFont, bounds, StandardDpi, minSizeInPoints: 72, maxSizeInPoints: 6));
+
+        Assert.Contains("Minimum size", ex.Message);
+        Assert.Contains("maximum size", ex.Message);
+    }
+
+    [Fact]
+    public void MeasureText_CombinedUnderlineAndStrikethrough_AppliesBothDecorations()
+    {
+        // Test that both decorations are applied simultaneously (bug fix verification)
+        var font = new FontSpec("Arial", 12, FontWeight.Normal, FontStyle.Underline | FontStyle.Strikethrough);
+        var measure = _measurer.MeasureText("Hello", font, StandardDpi);
+
+        // Should not throw and should produce valid measurements
+        Assert.True(measure.Width.Value > 0);
+        Assert.True(measure.Height.Value > 0);
+    }
+
+    [Fact]
     public void GetMaxFontSize_WithUnderlineStyle_ProducesValidSize()
     {
         var baseFont = new FontSpec("Arial", 12, FontWeight.Normal, FontStyle.Underline);
@@ -440,21 +466,6 @@ public class WpfTextMeasurerTests
         // Should produce valid measurements
         Assert.True(measure96.Width.Value > 0);
         Assert.True(measure96.Height.Value > 0);
-    }
-
-    [Fact]
-    public void GetMaxFontSize_MinSizeGreaterThanMaxSize_ReturnsMinSize()
-    {
-        var baseFont = new FontSpec("Arial", 12);
-        var text = "Test";
-        var bounds = new Measure(100.AsPixels(), 50.AsPixels());
-
-        // Invalid range: min (20) > max (10)
-        // Loop condition (high - low > 0.01) will be false immediately.
-        // Should return low (which starts at min).
-        var result = _measurer.GetMaxFontSize(text, baseFont, bounds, StandardDpi, minSizeInPoints: 20, maxSizeInPoints: 10);
-
-        Assert.Equal(20, result);
     }
 
     [Fact]

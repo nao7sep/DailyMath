@@ -43,9 +43,11 @@ public readonly struct FontSpec : IEquatable<FontSpec>
     /// <param name="style">The font style flags (default is None).</param>
     public FontSpec(string family, double sizeInPoints, FontWeight weight = FontWeight.Normal, FontStyle style = FontStyle.None)
     {
-        // Guard against invalid sizes
-        if (sizeInPoints <= 0 || double.IsNaN(sizeInPoints))
-            throw new ArgumentOutOfRangeException(nameof(sizeInPoints), "Font size must be positive and not NaN.");
+        if (string.IsNullOrWhiteSpace(family))
+            throw new ArgumentException("Font family name cannot be null or whitespace.", nameof(family));
+
+        if (sizeInPoints <= 0 || double.IsNaN(sizeInPoints) || double.IsInfinity(sizeInPoints))
+            throw new ArgumentOutOfRangeException(nameof(sizeInPoints), "Font size must be a positive finite number.");
 
         Family = family;
         SizeInPoints = sizeInPoints;
@@ -102,17 +104,21 @@ public readonly struct FontSpec : IEquatable<FontSpec>
         return desc;
     }
 
-    public override bool Equals(object? obj)
-    {
-        return obj is FontSpec spec && Equals(spec);
-    }
+    // --- Equality ---
 
     public bool Equals(FontSpec other)
     {
+        // Note: Using exact equality for doubles since SizeInPoints comes from user input
+        // and should match exactly for fonts to be considered equal
         return Family == other.Family &&
-               Math.Abs(SizeInPoints - other.SizeInPoints) < 0.001 && // Tolerance for double comparison
+               SizeInPoints == other.SizeInPoints &&
                Weight == other.Weight &&
                Style == other.Style;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is FontSpec spec && Equals(spec);
     }
 
     public override int GetHashCode()

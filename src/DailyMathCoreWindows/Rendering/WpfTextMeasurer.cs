@@ -52,6 +52,9 @@ public class WpfTextMeasurer : ITextMeasurer
         if (string.IsNullOrEmpty(text))
             return maxSizeInPoints;
 
+        if (minSizeInPoints > maxSizeInPoints)
+            throw new ArgumentException($"Minimum size ({minSizeInPoints}) cannot be greater than maximum size ({maxSizeInPoints}).");
+
         // 1. Resolve bounds to absolute pixels for fast comparison
         double maxWidthPx = bounds.Width.ToPixels(dpi: dpi);
         double maxHeightPx = bounds.Height.ToPixels(dpi: dpi);
@@ -127,13 +130,19 @@ public class WpfTextMeasurer : ITextMeasurer
         );
 
         // 5. Apply text decorations
+        // Build combined decoration collection since SetTextDecorations replaces existing decorations
+        var decorations = new TextDecorationCollection();
         if (spec.Style.HasFlag(Core.Rendering.FontStyle.Underline))
         {
-            formattedText.SetTextDecorations(TextDecorations.Underline);
+            decorations.Add(TextDecorations.Underline);
         }
         if (spec.Style.HasFlag(Core.Rendering.FontStyle.Strikethrough))
         {
-            formattedText.SetTextDecorations(TextDecorations.Strikethrough);
+            decorations.Add(TextDecorations.Strikethrough);
+        }
+        if (decorations.Count > 0)
+        {
+            formattedText.SetTextDecorations(decorations);
         }
 
         return formattedText;
