@@ -338,7 +338,7 @@ public class WpfTextMeasurerTests
         var maxSize = _measurer.GetMaxFontSize("", baseFont, bounds, StandardDpi, minSizeInPoints: 6, maxSizeInPoints: 72);
 
         // Empty string has zero size, so should return maximum
-        Assert.True(maxSize >= 71);
+        Assert.Equal(72, maxSize);
     }
 
     [Fact]

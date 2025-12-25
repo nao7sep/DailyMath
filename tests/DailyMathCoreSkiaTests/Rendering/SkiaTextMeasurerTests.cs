@@ -307,9 +307,8 @@ public class SkiaTextMeasurerTests
 
         var maxSize = _measurer.GetMaxFontSize("", baseFont, bounds, StandardDpi, minSizeInPoints: 6, maxSizeInPoints: 72);
 
-        // Empty string has zero size, but implementation still uses font metrics
-        // Just verify we get a valid result within range
-        Assert.True(maxSize >= 6 && maxSize <= 72);
+        // Empty string has zero size, so should return maximum
+        Assert.Equal(72, maxSize);
     }
 
     [Fact]

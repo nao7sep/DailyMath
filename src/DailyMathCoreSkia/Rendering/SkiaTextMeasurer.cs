@@ -49,6 +49,10 @@ public class SkiaTextMeasurer : ITextMeasurer
         double minSizeInPoints = 6,
         double maxSizeInPoints = 72)
     {
+        // Empty string has no size - return maximum since it fits in any bounds
+        if (string.IsNullOrEmpty(text))
+            return maxSizeInPoints;
+
         // 1. Resolve bounds to absolute pixels
         double maxWidthPx = bounds.Width.ToPixels(dpi: dpi);
         double maxHeightPx = bounds.Height.ToPixels(dpi: dpi);
