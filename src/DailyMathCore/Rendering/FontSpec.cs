@@ -8,10 +8,14 @@ namespace DailyMath.Core.Rendering;
 /// </summary>
 public readonly struct FontSpec : IEquatable<FontSpec>
 {
+    // --- Constants ---
+
     /// <summary>
     /// The number of Points per inch. This is a universal constant in digital typography.
     /// </summary>
     public const double PointsPerInch = 72.0;
+
+    // --- Properties ---
 
     /// <summary>
     /// Gets the font family name (e.g., "Arial", "Consolas").
@@ -33,6 +37,8 @@ public readonly struct FontSpec : IEquatable<FontSpec>
     /// Gets the style flags (decorations and slant).
     /// </summary>
     public FontStyle Style { get; }
+
+    // --- Constructor ---
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FontSpec"/> struct.
@@ -92,6 +98,8 @@ public readonly struct FontSpec : IEquatable<FontSpec>
         var newStyle = italic ? (Style | FontStyle.Italic) : (Style & ~FontStyle.Italic);
         return new(Family, SizeInPoints, Weight, newStyle);
     }
+
+    // --- Formatting ---
 
     /// <summary>
     /// Returns a string describing the font (e.g., "Arial 12pt Bold").

@@ -118,7 +118,7 @@ public class SkiaTextMeasurer : ITextMeasurer
     /// Creates an SKTypeface from FontSpec (family, weight, style).
     /// Reusable for multiple font sizes.
     /// </summary>
-    private SKTypeface CreateTypeface(FontSpec spec)
+    public static SKTypeface CreateTypeface(FontSpec spec)
     {
         // 1. Convert 100-900 Weight to Skia Weight
         // Skia uses the same 100-900 scale, so we can cast directly!

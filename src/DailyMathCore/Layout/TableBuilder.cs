@@ -11,25 +11,25 @@ public static class TableBuilder
     /// pixel-perfect alignment (no gaps from rounding).
     /// </summary>
     /// <param name="container">The parent element that will contain the table cells.</param>
-    /// <param name="rows">Number of rows.</param>
-    /// <param name="columns">Number of columns.</param>
+    /// <param name="rowCount">Number of rows.</param>
+    /// <param name="columnCount">Number of columns.</param>
     /// <returns>A Table providing indexed access to the created cells.</returns>
-    public static Table Create(Element container, int rows, int columns)
+    public static Table Create(Element container, int rowCount, int columnCount)
     {
-        if (rows <= 0)
-            throw new ArgumentOutOfRangeException(nameof(rows), "Rows must be positive");
-        if (columns <= 0)
-            throw new ArgumentOutOfRangeException(nameof(columns), "Columns must be positive");
+        if (rowCount <= 0)
+            throw new ArgumentOutOfRangeException(nameof(rowCount), "Rows must be positive");
+        if (columnCount <= 0)
+            throw new ArgumentOutOfRangeException(nameof(columnCount), "Columns must be positive");
 
-        var cells = new Element[rows, columns];
+        var cells = new Element[rowCount, columnCount];
 
         // Use precise doubles for even distribution
-        double columnPercent = 100.0 / columns;
-        double rowPercent = 100.0 / rows;
+        double columnPercent = 100.0 / columnCount;
+        double rowPercent = 100.0 / rowCount;
 
-        for (int r = 0; r < rows; r++)
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
         {
-            for (int c = 0; c < columns; c++)
+            for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
             {
                 var cell = new Element
                 {
@@ -42,15 +42,15 @@ public static class TableBuilder
                     // Left margin = column index * column percentage
                     // Top margin = row index * row percentage
                     Margin = new Inset(
-                        (c * columnPercent).AsPercent(), // Left
-                        (r * rowPercent).AsPercent(),    // Top
-                        0.AsPixels(),                     // Right (unused for TopLeft)
-                        0.AsPixels()                      // Bottom (unused for TopLeft)
+                        (columnIndex * columnPercent).AsPercent(), // Left
+                        (rowIndex * rowPercent).AsPercent(),       // Top
+                        0.AsPixels(),                              // Right (unused for TopLeft)
+                        0.AsPixels()                               // Bottom (unused for TopLeft)
                     )
                 };
 
                 container.AddChild(cell);
-                cells[r, c] = cell;
+                cells[rowIndex, columnIndex] = cell;
             }
         }
 

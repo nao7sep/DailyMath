@@ -6,18 +6,7 @@
 /// </summary>
 public readonly struct Color : IEquatable<Color>
 {
-    public byte R { get; }
-    public byte G { get; }
-    public byte B { get; }
-    public byte A { get; }
-
-    public Color(byte r, byte g, byte b, byte a = 255)
-    {
-        R = r;
-        G = g;
-        B = b;
-        A = a;
-    }
+    // --- Static Colors ---
 
     // Basic colors
     public static Color Black => new(0, 0, 0);
@@ -33,6 +22,23 @@ public readonly struct Color : IEquatable<Color>
     public static Color Magenta => new(255, 0, 255);
     public static Color Orange => new(255, 165, 0);
     public static Color Purple => new(128, 0, 128);
+
+    // --- Properties ---
+
+    public byte R { get; }
+    public byte G { get; }
+    public byte B { get; }
+    public byte A { get; }
+
+    // --- Constructor ---
+
+    public Color(byte r, byte g, byte b, byte a = 255)
+    {
+        R = r;
+        G = g;
+        B = b;
+        A = a;
+    }
 
     // --- Formatting ---
 

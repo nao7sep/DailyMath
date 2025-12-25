@@ -33,15 +33,15 @@ public class Table
     /// <summary>
     /// Gets the element at the specified row and column.
     /// </summary>
-    public Element this[int row, int column]
+    public Element this[int rowIndex, int columnIndex]
     {
         get
         {
-            if (row < 0 || row >= RowCount)
-                throw new ArgumentOutOfRangeException(nameof(row));
-            if (column < 0 || column >= ColumnCount)
-                throw new ArgumentOutOfRangeException(nameof(column));
-            return _cells[row, column];
+            if (rowIndex < 0 || rowIndex >= RowCount)
+                throw new ArgumentOutOfRangeException(nameof(rowIndex));
+            if (columnIndex < 0 || columnIndex >= ColumnCount)
+                throw new ArgumentOutOfRangeException(nameof(columnIndex));
+            return _cells[rowIndex, columnIndex];
         }
     }
 
@@ -49,25 +49,25 @@ public class Table
     /// Calculates the region spanning multiple cells.
     /// Useful for drawing content across merged cells without creating a spanning mechanism.
     /// </summary>
-    /// <param name="startRow">Starting row index (inclusive).</param>
-    /// <param name="startColumn">Starting column index (inclusive).</param>
+    /// <param name="startRowIndex">Starting row index (inclusive).</param>
+    /// <param name="startColumnIndex">Starting column index (inclusive).</param>
     /// <param name="rowCount">Number of rows to span.</param>
     /// <param name="columnCount">Number of columns to span.</param>
     /// <returns>A region covering the specified cell range.</returns>
-    public Region GetSpannedRegion(int startRow, int startColumn, int rowCount = 1, int columnCount = 1)
+    public Region GetSpannedRegion(int startRowIndex, int startColumnIndex, int rowCount = 1, int columnCount = 1)
     {
-        if (startRow < 0 || startRow >= RowCount)
-            throw new ArgumentOutOfRangeException(nameof(startRow));
-        if (startColumn < 0 || startColumn >= ColumnCount)
-            throw new ArgumentOutOfRangeException(nameof(startColumn));
-        if (startRow + rowCount > RowCount)
+        if (startRowIndex < 0 || startRowIndex >= RowCount)
+            throw new ArgumentOutOfRangeException(nameof(startRowIndex));
+        if (startColumnIndex < 0 || startColumnIndex >= ColumnCount)
+            throw new ArgumentOutOfRangeException(nameof(startColumnIndex));
+        if (startRowIndex + rowCount > RowCount)
             throw new ArgumentOutOfRangeException(nameof(rowCount));
-        if (startColumn + columnCount > ColumnCount)
+        if (startColumnIndex + columnCount > ColumnCount)
             throw new ArgumentOutOfRangeException(nameof(columnCount));
 
         // Get regions of corner cells
-        Region topLeft = _cells[startRow, startColumn].GetAbsoluteRegion();
-        Region bottomRight = _cells[startRow + rowCount - 1, startColumn + columnCount - 1].GetAbsoluteRegion();
+        Region topLeft = _cells[startRowIndex, startColumnIndex].GetAbsoluteRegion();
+        Region bottomRight = _cells[startRowIndex + rowCount - 1, startColumnIndex + columnCount - 1].GetAbsoluteRegion();
 
         return new Region(
             topLeft.Left,

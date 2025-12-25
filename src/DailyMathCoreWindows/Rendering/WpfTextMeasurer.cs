@@ -96,7 +96,7 @@ public class WpfTextMeasurer : ITextMeasurer
     /// Creates a FormattedText instance with the specified text and font.
     /// Converts Points to Pixels using DPI for accurate measurement.
     /// </summary>
-    private FormattedText CreateFormattedText(string text, FontSpec spec, double dpi)
+    public static FormattedText CreateFormattedText(string text, FontSpec spec, double dpi)
     {
         // 1. Create Typeface from FontSpec
         var typeface = new Typeface(
@@ -151,7 +151,7 @@ public class WpfTextMeasurer : ITextMeasurer
     /// <summary>
     /// Converts FontWeight enum (100-900) to WPF FontWeight.
     /// </summary>
-    private System.Windows.FontWeight ConvertToFontWeight(Core.Rendering.FontWeight weight)
+    public static System.Windows.FontWeight ConvertToFontWeight(Core.Rendering.FontWeight weight)
     {
         return weight switch
         {
@@ -171,7 +171,7 @@ public class WpfTextMeasurer : ITextMeasurer
     /// <summary>
     /// Converts FontStyle flags to WPF FontStyle.
     /// </summary>
-    private System.Windows.FontStyle ConvertToFontStyle(Core.Rendering.FontStyle style)
+    public static System.Windows.FontStyle ConvertToFontStyle(Core.Rendering.FontStyle style)
     {
         if (style.HasFlag(Core.Rendering.FontStyle.Italic))
             return FontStyles.Italic;
