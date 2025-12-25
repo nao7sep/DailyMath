@@ -6,8 +6,6 @@
 /// </summary>
 public readonly struct Color : IEquatable<Color>
 {
-    // --- Static Colors ---
-
     // Basic colors
     public static Color Black => new(0, 0, 0);
     public static Color White => new(255, 255, 255);
@@ -23,14 +21,10 @@ public readonly struct Color : IEquatable<Color>
     public static Color Orange => new(255, 165, 0);
     public static Color Purple => new(128, 0, 128);
 
-    // --- Properties ---
-
     public byte R { get; }
     public byte G { get; }
     public byte B { get; }
     public byte A { get; }
-
-    // --- Constructor ---
 
     public Color(byte r, byte g, byte b, byte a = 255)
     {
@@ -40,13 +34,9 @@ public readonly struct Color : IEquatable<Color>
         A = a;
     }
 
-    // --- Formatting ---
-
     public override string ToString() => A == 255
         ? $"#{R:X2}{G:X2}{B:X2}"
         : $"#{R:X2}{G:X2}{B:X2}{A:X2}";
-
-    // --- Equality ---
 
     public bool Equals(Color other)
     {

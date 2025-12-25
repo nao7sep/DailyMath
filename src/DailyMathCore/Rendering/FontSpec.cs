@@ -8,14 +8,10 @@ namespace DailyMath.Core.Rendering;
 /// </summary>
 public readonly struct FontSpec : IEquatable<FontSpec>
 {
-    // --- Constants ---
-
     /// <summary>
     /// The number of Points per inch. This is a universal constant in digital typography.
     /// </summary>
     public const double PointsPerInch = 72.0;
-
-    // --- Properties ---
 
     /// <summary>
     /// Gets the font family name (e.g., "Arial", "Consolas").
@@ -38,8 +34,6 @@ public readonly struct FontSpec : IEquatable<FontSpec>
     /// </summary>
     public FontStyle Style { get; }
 
-    // --- Constructor ---
-
     /// <summary>
     /// Initializes a new instance of the <see cref="FontSpec"/> struct.
     /// </summary>
@@ -61,8 +55,6 @@ public readonly struct FontSpec : IEquatable<FontSpec>
         Style = style;
     }
 
-    // --- Fluent Builder Methods (Immutable Modifiers) ---
-
     /// <summary>
     /// Creates a copy of this font with a different size.
     /// </summary>
@@ -82,8 +74,6 @@ public readonly struct FontSpec : IEquatable<FontSpec>
     public FontSpec WithStyle(FontStyle style)
         => new(Family, SizeInPoints, Weight, style);
 
-    // --- Convenience Helpers ---
-
     /// <summary>
     /// Creates a copy of this font with the Bold weight (700) or Normal (400).
     /// </summary>
@@ -99,8 +89,6 @@ public readonly struct FontSpec : IEquatable<FontSpec>
         return new(Family, SizeInPoints, Weight, newStyle);
     }
 
-    // --- Formatting ---
-
     /// <summary>
     /// Returns a string describing the font (e.g., "Arial 12pt Bold").
     /// </summary>
@@ -111,8 +99,6 @@ public readonly struct FontSpec : IEquatable<FontSpec>
         if (Style != FontStyle.None) desc += $" {Style}";
         return desc;
     }
-
-    // --- Equality ---
 
     public bool Equals(FontSpec other)
     {
