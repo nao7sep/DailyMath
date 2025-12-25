@@ -353,4 +353,38 @@ public class FontSpecTests
         Assert.NotEqual(original.Style, modified3.Style);
         Assert.NotEqual(original.Weight, modified4.Weight);
     }
+
+    [Fact]
+    public void Equals_SameValues_ReturnsTrue()
+    {
+        var font1 = new FontSpec("Arial", 12, FontWeight.Bold, FontStyle.Italic);
+        var font2 = new FontSpec("Arial", 12, FontWeight.Bold, FontStyle.Italic);
+
+        Assert.Equal(font1, font2);
+    }
+
+    [Fact]
+    public void Equals_DifferentValues_ReturnsFalse()
+    {
+        var font1 = new FontSpec("Arial", 12);
+        var font2 = new FontSpec("Consolas", 12);
+
+        Assert.NotEqual(font1, font2);
+    }
+
+    [Fact]
+    public void Constructor_NullFamily_DoesNotThrow()
+    {
+        // Currently allowed by struct, though perhaps not ideal.
+        // Verifying it doesn't crash the constructor.
+        var font = new FontSpec(null!, 12);
+        Assert.Null(font.Family);
+    }
+
+    [Fact]
+    public void Constructor_NaNSize_ThrowsArgumentOutOfRangeException()
+    {
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new FontSpec("Arial", double.NaN));
+        Assert.Equal("sizeInPoints", ex.ParamName);
+    }
 }

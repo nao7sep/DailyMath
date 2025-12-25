@@ -441,4 +441,33 @@ public class WpfTextMeasurerTests
         Assert.True(measure96.Width.Value > 0);
         Assert.True(measure96.Height.Value > 0);
     }
+
+    [Fact]
+    public void GetMaxFontSize_MinSizeGreaterThanMaxSize_ReturnsMinSize()
+    {
+        var baseFont = new FontSpec("Arial", 12);
+        var text = "Test";
+        var bounds = new Measure(100.AsPixels(), 50.AsPixels());
+
+        // Invalid range: min (20) > max (10)
+        // Loop condition (high - low > 0.01) will be false immediately.
+        // Should return low (which starts at min).
+        var result = _measurer.GetMaxFontSize(text, baseFont, bounds, StandardDpi, minSizeInPoints: 20, maxSizeInPoints: 10);
+
+        Assert.Equal(20, result);
+    }
+
+    [Fact]
+    public void GetMaxFontSize_TextDoesNotFitAtMinSize_ReturnsMinSize()
+    {
+        var baseFont = new FontSpec("Arial", 12);
+        var text = "This text is too long";
+        var tinyBounds = new Measure(10.AsPixels(), 10.AsPixels());
+
+        // Text won't fit even at min size (10).
+        // Returns low (clamped to min).
+        var result = _measurer.GetMaxFontSize(text, baseFont, tinyBounds, StandardDpi, minSizeInPoints: 10, maxSizeInPoints: 100);
+
+        Assert.Equal(10, result);
+    }
 }

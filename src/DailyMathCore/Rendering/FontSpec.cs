@@ -6,7 +6,7 @@ namespace DailyMath.Core.Rendering;
 /// Defines the complete specification for a font configuration.
 /// Immutable struct designed for thread-safety and predictability in layout engines.
 /// </summary>
-public readonly struct FontSpec
+public readonly struct FontSpec : IEquatable<FontSpec>
 {
     /// <summary>
     /// The number of Points per inch. This is a universal constant in digital typography.
@@ -43,9 +43,9 @@ public readonly struct FontSpec
     /// <param name="style">The font style flags (default is None).</param>
     public FontSpec(string family, double sizeInPoints, FontWeight weight = FontWeight.Normal, FontStyle style = FontStyle.None)
     {
-        // Guard against invalid sizes (optional, but good practice)
-        if (sizeInPoints <= 0)
-            throw new ArgumentOutOfRangeException(nameof(sizeInPoints), "Font size must be positive.");
+        // Guard against invalid sizes
+        if (sizeInPoints <= 0 || double.IsNaN(sizeInPoints))
+            throw new ArgumentOutOfRangeException(nameof(sizeInPoints), "Font size must be positive and not NaN.");
 
         Family = family;
         SizeInPoints = sizeInPoints;
@@ -100,5 +100,33 @@ public readonly struct FontSpec
         if (Weight != FontWeight.Normal) desc += $" {Weight}";
         if (Style != FontStyle.None) desc += $" {Style}";
         return desc;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is FontSpec spec && Equals(spec);
+    }
+
+    public bool Equals(FontSpec other)
+    {
+        return Family == other.Family &&
+               Math.Abs(SizeInPoints - other.SizeInPoints) < 0.001 && // Tolerance for double comparison
+               Weight == other.Weight &&
+               Style == other.Style;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Family, SizeInPoints, Weight, Style);
+    }
+
+    public static bool operator ==(FontSpec left, FontSpec right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(FontSpec left, FontSpec right)
+    {
+        return !(left == right);
     }
 }

@@ -248,4 +248,33 @@ public class ColorTests
 
         Assert.Equal(expected, color.ToString());
     }
+
+    [Fact]
+    public void Equals_SameValues_ReturnsTrue()
+    {
+        var color1 = new Color(10, 20, 30, 40);
+        var color2 = new Color(10, 20, 30, 40);
+
+        Assert.Equal(color1, color2);
+        Assert.True(color1.Equals(color2));
+    }
+
+    [Fact]
+    public void Equals_DifferentValues_ReturnsFalse()
+    {
+        var color1 = new Color(10, 20, 30, 40);
+        var color2 = new Color(10, 20, 30, 41);
+
+        Assert.NotEqual(color1, color2);
+        Assert.False(color1.Equals(color2));
+    }
+
+    [Fact]
+    public void GetHashCode_SameValues_ReturnsSameHashCode()
+    {
+        var color1 = new Color(10, 20, 30, 40);
+        var color2 = new Color(10, 20, 30, 40);
+
+        Assert.Equal(color1.GetHashCode(), color2.GetHashCode());
+    }
 }

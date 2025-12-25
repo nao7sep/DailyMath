@@ -4,7 +4,7 @@
 /// Represents a color with red, green, blue, and alpha components.
 /// Platform-agnostic color representation for cross-platform rendering.
 /// </summary>
-public readonly struct Color
+public readonly struct Color : IEquatable<Color>
 {
     public byte R { get; }
     public byte G { get; }
@@ -37,4 +37,32 @@ public readonly struct Color
     public override string ToString() => A == 255
         ? $"#{R:X2}{G:X2}{B:X2}"
         : $"#{R:X2}{G:X2}{B:X2}{A:X2}";
+
+    public override bool Equals(object? obj)
+    {
+        return obj is Color color && Equals(color);
+    }
+
+    public bool Equals(Color other)
+    {
+        return R == other.R &&
+               G == other.G &&
+               B == other.B &&
+               A == other.A;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(R, G, B, A);
+    }
+
+    public static bool operator ==(Color left, Color right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Color left, Color right)
+    {
+        return !(left == right);
+    }
 }

@@ -20,7 +20,18 @@ public class SkiaTextMeasurer : ITextMeasurer
         if (string.IsNullOrEmpty(text))
             return new Measure(0.AsPixels(), 0.AsPixels());
 
-        using var skFont = CreateFont(font, dpi);
+        // Create Typeface and Font explicitly to ensure both are Disposed
+        using var typeface = CreateTypeface(font);
+
+        // Convert Size (Points -> Pixels)
+        // Formula: Pixels = Points * (DPI / PointsPerInch)
+        // SKFont expects Size in PIXELS.
+        float pixelSize = (float)(font.SizeInPoints * (dpi / FontSpec.PointsPerInch));
+
+        using var skFont = new SKFont(typeface, pixelSize)
+        {
+            Subpixel = true
+        };
 
         // 1. Measure Width
         // Skia measures accurate horizontal advance
@@ -98,28 +109,6 @@ public class SkiaTextMeasurer : ITextMeasurer
 
         // Return the lower bound (guaranteed to fit)
         return low;
-    }
-
-    /// <summary>
-    /// Creates an SKFont configured with the correct font family, style, and size.
-    /// Critical: Converts Points (Physical) to Pixels (Digital) using DPI.
-    /// Note: Underline and Strikethrough decorations must be drawn manually in rendering code.
-    /// </summary>
-    private SKFont CreateFont(FontSpec spec, double dpi)
-    {
-        var typeface = CreateTypeface(spec);
-
-        // Convert Size (Points -> Pixels)
-        // Formula: Pixels = Points * (DPI / PointsPerInch)
-        // SKFont expects Size in PIXELS.
-        float pixelSize = (float)(spec.SizeInPoints * (dpi / FontSpec.PointsPerInch));
-
-        var font = new SKFont(typeface, pixelSize)
-        {
-            Subpixel = true
-        };
-
-        return font;
     }
 
     /// <summary>
