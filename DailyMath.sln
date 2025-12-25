@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCore", "src\DailyM
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathTests", "tests\DailyMathTests\DailyMathTests.csproj", "{DB75324F-31C1-4C3C-8689-52E17F4E0722}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreTests", "tests\DailyMathCoreTests\DailyMathCoreTests.csproj", "{DB75324F-31C1-4C3C-8689-52E17F4E0722}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreSkia", "src\DailyMathCoreSkia\DailyMathCoreSkia.csproj", "{85C35438-6834-4AB6-8E9E-B9AAA4C9AAB7}"
 EndProject
