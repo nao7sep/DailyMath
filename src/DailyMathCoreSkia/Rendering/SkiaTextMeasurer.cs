@@ -82,13 +82,8 @@ public class SkiaTextMeasurer : ITextMeasurer
     }
 
     /// <inheritdoc />
-    public double GetMaxFontSize(
-        string text,
-        FontSpec baseFont,
-        Measure bounds,
-        double dpi,
-        double minSizeInPoints = 6,
-        double maxSizeInPoints = 72)
+    public double GetMaxFontSize(string text, FontSpec baseFont, Measure bounds, double dpi,
+        double minSizeInPoints = 6, double maxSizeInPoints = 72)
     {
         // Empty string has no size - return maximum since it fits in any bounds
         if (string.IsNullOrEmpty(text))
