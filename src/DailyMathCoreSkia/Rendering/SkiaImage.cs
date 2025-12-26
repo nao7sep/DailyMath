@@ -20,7 +20,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
     // --- Properties ---
 
-    public SKBitmap Bitmap 
+    public SKBitmap Bitmap
     {
         get
         {
@@ -68,7 +68,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
         if (!File.Exists(path))
             throw new FileNotFoundException("Image file not found.", path);
 
-        return await Task.Run(() => 
+        return await Task.Run(() =>
         {
             using var stream = File.OpenRead(path);
             using var codec = SKCodec.Create(stream);
@@ -78,6 +78,8 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
     public static SkiaImage Load(ReadOnlySpan<byte> data)
     {
+        // Use unsafe to pin span memory for interop with SkiaSharp's unmanaged SKData API.
+        // The fixed block ensures the GC won't move the data during the SKData.CreateCopy call.
         unsafe
         {
             fixed (byte* ptr = data)
@@ -93,20 +95,20 @@ public sealed class SkiaImage : IImage<SkiaImage>
     {
         if (stream.CanSeek)
         {
-            return await Task.Run(() => 
+            return await Task.Run(() =>
             {
                 using var codec = SKCodec.Create(stream);
                 return LoadFromCodec(codec);
             }, cancellationToken);
         }
 
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms, cancellationToken);
-        ms.Position = 0;
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream, cancellationToken);
+        memoryStream.Position = 0;
 
-        return await Task.Run(() => 
+        return await Task.Run(() =>
         {
-            using var codec = SKCodec.Create(ms);
+            using var codec = SKCodec.Create(memoryStream);
             return LoadFromCodec(codec);
         }, cancellationToken);
     }
@@ -129,10 +131,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
     public void CopyPixels(Span<byte> destination)
     {
         ThrowIfDisposed();
-        
-        int expectedSize = Width * Height * 4;
-        if (destination.Length < expectedSize)
-            throw new ArgumentException($"Destination span is too small. Expected {expectedSize} bytes.", nameof(destination));
+        ValidatePixelBufferSize(destination.Length, nameof(destination));
 
         var srcSpan = _bitmap.GetPixelSpan();
         int rowBytes = _bitmap.RowBytes;
@@ -156,10 +155,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
     public void WritePixels(ReadOnlySpan<byte> source)
     {
         ThrowIfDisposed();
-
-        int expectedSize = Width * Height * 4;
-        if (source.Length < expectedSize)
-            throw new ArgumentException($"Source span is too small. Expected {expectedSize} bytes.", nameof(source));
+        ValidatePixelBufferSize(source.Length, nameof(source));
 
         var dstSpan = _bitmap.GetPixelSpan();
         int rowBytes = _bitmap.RowBytes;
@@ -211,9 +207,9 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
     public byte[] Encode(ImageFormat format, int? quality = null)
     {
-        using var ms = new MemoryStream();
-        Encode(ms, format, quality);
-        return ms.ToArray();
+        using var memoryStream = new MemoryStream();
+        Encode(memoryStream, format, quality);
+        return memoryStream.ToArray();
     }
 
     public void Encode(Stream stream, ImageFormat format, int? quality = null)
@@ -221,7 +217,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
         ThrowIfDisposed();
         var skFormat = MapFormat(format);
         int qualityValue = quality ?? GetDefaultQuality(format);
-        
+
         using var image = SKImage.FromBitmap(_bitmap);
         using var data = image.Encode(skFormat, qualityValue);
         data.SaveTo(stream);
@@ -271,7 +267,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
         var info = codec.Info;
         var bitmap = new SKBitmap(info.Width, info.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
-        
+
         var result = codec.GetPixels(bitmap.Info, bitmap.GetPixels());
         if (result != SKCodecResult.Success)
         {
@@ -292,15 +288,15 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
     private static SKBitmap ApplyOrientation(SKBitmap bitmap, SKEncodedOrigin origin)
     {
-        int w = bitmap.Width;
-        int h = bitmap.Height;
+        int width = bitmap.Width;
+        int height = bitmap.Height;
 
         bool swapDimensions = origin == SKEncodedOrigin.LeftTop || origin == SKEncodedOrigin.RightTop ||
                               origin == SKEncodedOrigin.RightBottom || origin == SKEncodedOrigin.LeftBottom;
 
-        var newInfo = new SKImageInfo(swapDimensions ? h : w, swapDimensions ? w : h, bitmap.ColorType, bitmap.AlphaType);
+        var newInfo = new SKImageInfo(swapDimensions ? height : width, swapDimensions ? width : height, bitmap.ColorType, bitmap.AlphaType);
         var rotated = new SKBitmap(newInfo);
-        
+
         using var canvas = new SKCanvas(rotated);
         canvas.ResetMatrix();
 
@@ -309,39 +305,39 @@ public sealed class SkiaImage : IImage<SkiaImage>
             case SKEncodedOrigin.TopLeft:
                 break;
             case SKEncodedOrigin.TopRight:
-                canvas.Translate(w, 0);
+                canvas.Translate(width, 0);
                 canvas.Scale(-1, 1);
                 break;
             case SKEncodedOrigin.BottomRight:
-                canvas.Translate(w, h);
+                canvas.Translate(width, height);
                 canvas.RotateDegrees(180);
                 break;
             case SKEncodedOrigin.BottomLeft:
-                canvas.Translate(0, h);
+                canvas.Translate(0, height);
                 canvas.Scale(1, -1);
                 break;
             case SKEncodedOrigin.LeftTop:
-                canvas.Translate(h, 0);
+                canvas.Translate(height, 0);
                 canvas.RotateDegrees(90);
-                canvas.Translate(0, w);
+                canvas.Translate(0, width);
                 canvas.Scale(1, -1);
                 break;
             case SKEncodedOrigin.RightTop:
-                canvas.Translate(h, 0);
+                canvas.Translate(height, 0);
                 canvas.RotateDegrees(90);
                 break;
             case SKEncodedOrigin.RightBottom:
-                canvas.Translate(0, w);
+                canvas.Translate(0, width);
                 canvas.RotateDegrees(270);
-                canvas.Translate(h, 0);
+                canvas.Translate(height, 0);
                 canvas.Scale(-1, 1);
                 break;
             case SKEncodedOrigin.LeftBottom:
-                canvas.Translate(0, w);
+                canvas.Translate(0, width);
                 canvas.RotateDegrees(270);
                 break;
         }
-        
+
         canvas.DrawBitmap(bitmap, 0, 0);
         return rotated;
     }
@@ -356,6 +352,15 @@ public sealed class SkiaImage : IImage<SkiaImage>
             ImageFormat.Avif => 80,
             _ => 100
         };
+    }
+
+    private int GetExpectedPixelBufferSize() => Width * Height * 4;
+
+    private void ValidatePixelBufferSize(int bufferLength, string paramName)
+    {
+        int expectedSize = GetExpectedPixelBufferSize();
+        if (bufferLength < expectedSize)
+            throw new ArgumentException($"Buffer is too small. Expected {expectedSize} bytes.", paramName);
     }
 
     private static SKEncodedImageFormat MapFormat(ImageFormat format)

@@ -96,7 +96,7 @@ public sealed class WpfRenderer : IRenderer
 
         double emSize = font.SizeInPoints * (96.0 / 72.0);
 
-        var ft = new FormattedText(
+        var formattedText = new FormattedText(
             text,
             CultureInfo.InvariantCulture,
             FlowDirection.LeftToRight,
@@ -105,8 +105,8 @@ public sealed class WpfRenderer : IRenderer
             GetBrushCached(color),
             dpi / 96.0);
 
-        var pos = LayoutCalculator.Align(region, ft.Width, ft.Height, alignment);
-        _dc.DrawText(ft, new WPoint(pos.X, pos.Y));
+        var pos = LayoutCalculator.Align(region, formattedText.Width, formattedText.Height, alignment);
+        _dc.DrawText(formattedText, new WPoint(pos.X, pos.Y));
     }
 
     public void DrawTextToFit(Region region, double dpi, string text, FontSpec baseFont, ContentAlignment alignment, CoreColor color, TextFitMode fitMode = TextFitMode.HeightOnly, double minSizePoints = 6, double maxSizePoints = 72)
@@ -124,7 +124,7 @@ public sealed class WpfRenderer : IRenderer
             double mid = (low + high) / 2.0;
             double sizeInDips = mid * (96.0 / 72.0);
 
-            var ft = new FormattedText(
+            var testText = new FormattedText(
                 text,
                 CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight,
@@ -133,8 +133,8 @@ public sealed class WpfRenderer : IRenderer
                 Brushes.Black,
                 pixelsPerDip);
 
-            bool fitsWidth = fitMode == TextFitMode.HeightOnly || ft.Width <= region.Width;
-            bool fitsHeight = fitMode == TextFitMode.WidthOnly || ft.Height <= region.Height;
+            bool fitsWidth = fitMode == TextFitMode.HeightOnly || testText.Width <= region.Width;
+            bool fitsHeight = fitMode == TextFitMode.WidthOnly || testText.Height <= region.Height;
 
             if (fitsWidth && fitsHeight)
             {
@@ -257,13 +257,13 @@ public sealed class WpfRenderer : IRenderer
 
     // --- Helpers ---
 
-    private static Rect ToRect(Region r) => new Rect(r.Left, r.Top, r.Width, r.Height);
+    private static Rect ToRect(Region region) => new Rect(region.Left, region.Top, region.Width, region.Height);
 
-    private static Brush GetBrushCached(CoreColor c)
+    private static Brush GetBrushCached(CoreColor color)
     {
-        return _brushCache.GetOrAdd(c, color =>
+        return _brushCache.GetOrAdd(color, c =>
         {
-            var brush = new SolidColorBrush(WpfColor.FromArgb(color.A, color.R, color.G, color.B));
+            var brush = new SolidColorBrush(WpfColor.FromArgb(c.A, c.R, c.G, c.B));
             brush.Freeze();
             return brush;
         });

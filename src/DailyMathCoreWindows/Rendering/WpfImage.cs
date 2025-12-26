@@ -71,12 +71,12 @@ public sealed class WpfImage : IImage<WpfImage>
     {
         if (!File.Exists(path))
             throw new FileNotFoundException("Image file not found.", path);
-            
+
         byte[] data;
         using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true))
         {
             data = new byte[stream.Length];
-            await stream.ReadAsync(data, cancellationToken);
+            await stream.ReadExactlyAsync(data, cancellationToken);
         }
         return Load(data);
     }
@@ -89,10 +89,10 @@ public sealed class WpfImage : IImage<WpfImage>
 
     public static async Task<WpfImage> LoadAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms, cancellationToken);
-        ms.Position = 0;
-        return LoadFromStreamInternal(ms);
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream, cancellationToken);
+        memoryStream.Position = 0;
+        return LoadFromStreamInternal(memoryStream);
     }
 
     // --- Pixel Access ---
@@ -104,7 +104,7 @@ public sealed class WpfImage : IImage<WpfImage>
 
         byte[] pixelData = new byte[4];
         int stride = 4;
-        
+
         _bitmap.CopyPixels(new Int32Rect(x, y, 1, 1), pixelData, stride, 0);
 
         byte b = pixelData[0];
@@ -133,17 +133,18 @@ public sealed class WpfImage : IImage<WpfImage>
     public void CopyPixels(Span<byte> destination)
     {
         ThrowIfDisposed();
-
-        int expectedSize = Width * Height * 4;
-        if (destination.Length < expectedSize)
-            throw new ArgumentException($"Destination span is too small. Expected {expectedSize} bytes.", nameof(destination));
+        ValidatePixelBufferSize(destination.Length, nameof(destination));
 
         _bitmap.Lock();
         try
         {
             int stride = _bitmap.BackBufferStride;
             int widthBytes = Width * 4;
+            int expectedSize = GetExpectedPixelBufferSize();
 
+            // Use unsafe for direct memory access to the WriteableBitmap back buffer.
+            // This avoids intermediate allocations and provides optimal copy performance.
+            // The fixed block pins the destination span while we copy from unmanaged memory.
             unsafe
             {
                 byte* srcPtr = (byte*)_bitmap.BackBuffer.ToPointer();
@@ -155,9 +156,9 @@ public sealed class WpfImage : IImage<WpfImage>
                     }
                     else
                     {
-                        for (int y = 0; y < Height; y++)
+                        for (int row = 0; row < Height; row++)
                         {
-                            Buffer.MemoryCopy(srcPtr + (y * stride), dstPtr + (y * widthBytes), widthBytes, widthBytes);
+                            Buffer.MemoryCopy(srcPtr + (row * stride), dstPtr + (row * widthBytes), widthBytes, widthBytes);
                         }
                     }
                 }
@@ -172,17 +173,18 @@ public sealed class WpfImage : IImage<WpfImage>
     public void WritePixels(ReadOnlySpan<byte> source)
     {
         ThrowIfDisposed();
-
-        int expectedSize = Width * Height * 4;
-        if (source.Length < expectedSize)
-            throw new ArgumentException($"Source span is too small. Expected {expectedSize} bytes.", nameof(source));
+        ValidatePixelBufferSize(source.Length, nameof(source));
 
         _bitmap.Lock();
         try
         {
             int stride = _bitmap.BackBufferStride;
             int widthBytes = Width * 4;
+            int expectedSize = GetExpectedPixelBufferSize();
 
+            // Use unsafe for direct memory access to the WriteableBitmap back buffer.
+            // This avoids intermediate allocations and provides optimal copy performance.
+            // The fixed block pins the source span while we copy to unmanaged memory.
             unsafe
             {
                 byte* dstPtr = (byte*)_bitmap.BackBuffer.ToPointer();
@@ -194,9 +196,9 @@ public sealed class WpfImage : IImage<WpfImage>
                     }
                     else
                     {
-                        for (int y = 0; y < Height; y++)
+                        for (int row = 0; row < Height; row++)
                         {
-                            Buffer.MemoryCopy(srcPtr + (y * widthBytes), dstPtr + (y * stride), widthBytes, widthBytes);
+                            Buffer.MemoryCopy(srcPtr + (row * widthBytes), dstPtr + (row * stride), widthBytes, widthBytes);
                         }
                     }
                 }
@@ -222,7 +224,7 @@ public sealed class WpfImage : IImage<WpfImage>
 
         var transform = new ScaleTransform(scaleX, scaleY);
         var transformed = new TransformedBitmap(_bitmap, transform);
-        
+
         _bitmap = new WriteableBitmap(transformed);
     }
 
@@ -238,9 +240,9 @@ public sealed class WpfImage : IImage<WpfImage>
 
     public byte[] Encode(ImageFormat format, int? quality = null)
     {
-        using var ms = new MemoryStream();
-        Encode(ms, format, quality);
-        return ms.ToArray();
+        using var memoryStream = new MemoryStream();
+        Encode(memoryStream, format, quality);
+        return memoryStream.ToArray();
     }
 
     public void Encode(Stream stream, ImageFormat format, int? quality = null)
@@ -267,7 +269,7 @@ public sealed class WpfImage : IImage<WpfImage>
 
     public async Task<byte[]> EncodeAsync(ImageFormat format, int? quality = null, CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(Encode(format, quality));
+        return await Task.Run(() => Encode(format, quality), cancellationToken);
     }
 
     public async Task EncodeAsync(Stream stream, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default)
@@ -306,7 +308,7 @@ public sealed class WpfImage : IImage<WpfImage>
     {
         var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
         var frame = decoder.Frames[0];
-        
+
         BitmapSource source = frame;
 
         if (frame.Metadata is BitmapMetadata metadata && metadata.ContainsQuery("System.Photo.Orientation"))
@@ -348,6 +350,15 @@ public sealed class WpfImage : IImage<WpfImage>
     {
         if (x < 0 || x >= Width || y < 0 || y >= Height)
             throw new ArgumentOutOfRangeException("Coordinates are out of bounds.");
+    }
+
+    private int GetExpectedPixelBufferSize() => Width * Height * 4;
+
+    private void ValidatePixelBufferSize(int bufferLength, string paramName)
+    {
+        int expectedSize = GetExpectedPixelBufferSize();
+        if (bufferLength < expectedSize)
+            throw new ArgumentException($"Buffer is too small. Expected {expectedSize} bytes.", paramName);
     }
 
     private void ThrowIfDisposed()

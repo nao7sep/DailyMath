@@ -235,9 +235,9 @@ public sealed class SkiaRenderer : IRenderer
         _paint.IsAntialias = true;
     }
 
-    private static SKRect ToSkRect(Region r) => new SKRect((float)r.Left, (float)r.Top, (float)r.Right, (float)r.Bottom);
+    private static SKRect ToSkRect(Region region) => new SKRect((float)region.Left, (float)region.Top, (float)region.Right, (float)region.Bottom);
 
-    private static SKColor ToSkColor(Color c) => new SKColor(c.R, c.G, c.B, c.A);
+    private static SKColor ToSkColor(Color color) => new SKColor(color.R, color.G, color.B, color.A);
 
     private static SKTypeface GetTypefaceCached(FontSpec spec)
     {
