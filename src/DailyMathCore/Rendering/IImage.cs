@@ -100,7 +100,7 @@ public interface IImage : IDisposable
     /// <remarks>
     /// The caller receives ownership of the returned byte array. Callers should dispose/clear the array if it contains sensitive data.
     /// </remarks>
-    byte[] Encode(ImageFormat format, int? quality = null);
+    byte[] Encode(ImageFormat format, ImageEncodeOptions? options = null);
 
     /// <summary>
     /// Encodes the image to the specified stream.
@@ -108,7 +108,7 @@ public interface IImage : IDisposable
     /// <remarks>
     /// The caller retains ownership and responsibility for the stream (e.g., flushing, disposal). This method does not close or dispose the stream.
     /// </remarks>
-    void Encode(Stream stream, ImageFormat format, int? quality = null);
+    void Encode(Stream stream, ImageFormat format, ImageEncodeOptions? options = null);
 
     /// <summary>
     /// Asynchronously encodes the image to a byte array.
@@ -116,7 +116,7 @@ public interface IImage : IDisposable
     /// <remarks>
     /// Encoding is CPU-bound; use cancellationToken to allow cancellation of long-running operations on large images.
     /// </remarks>
-    Task<byte[]> EncodeAsync(ImageFormat format, int? quality = null, CancellationToken cancellationToken = default);
+    Task<byte[]> EncodeAsync(ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously encodes the image to the specified stream.
@@ -124,7 +124,7 @@ public interface IImage : IDisposable
     /// <remarks>
     /// The caller retains ownership of the stream. Like the synchronous variant, this method does not dispose or flush the stream.
     /// </remarks>
-    Task EncodeAsync(Stream stream, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default);
+    Task EncodeAsync(Stream stream, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Encodes and saves the image to the specified file path.
@@ -132,7 +132,7 @@ public interface IImage : IDisposable
     /// <remarks>
     /// This method creates or overwrites the file. The file is flushed and closed before the method returns.
     /// </remarks>
-    void Save(string path, ImageFormat format, int? quality = null);
+    void Save(string path, ImageFormat format, ImageEncodeOptions? options = null);
 
     /// <summary>
     /// Asynchronously encodes and saves the image to the specified file path.
@@ -140,7 +140,7 @@ public interface IImage : IDisposable
     /// <remarks>
     /// The file is flushed and closed asynchronously. Use cancellationToken to cancel the operation.
     /// </remarks>
-    Task SaveAsync(string path, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default);
+    Task SaveAsync(string path, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

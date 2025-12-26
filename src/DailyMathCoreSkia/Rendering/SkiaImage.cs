@@ -205,46 +205,47 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
     // --- I/O ---
 
-    public byte[] Encode(ImageFormat format, int? quality = null)
+    public byte[] Encode(ImageFormat format, ImageEncodeOptions? options = null)
     {
         using var memoryStream = new MemoryStream();
-        Encode(memoryStream, format, quality);
+        Encode(memoryStream, format, options);
         return memoryStream.ToArray();
     }
 
-    public void Encode(Stream stream, ImageFormat format, int? quality = null)
+    public void Encode(Stream stream, ImageFormat format, ImageEncodeOptions? options = null)
     {
         ThrowIfDisposed();
+        options ??= ImageEncodeOptions.Default;
         var skFormat = MapFormat(format);
-        int qualityValue = quality ?? GetDefaultQuality(format);
+        int qualityValue = options.JpegQuality;
 
         using var image = SKImage.FromBitmap(_bitmap);
         using var data = image.Encode(skFormat, qualityValue);
         data.SaveTo(stream);
     }
 
-    public async Task<byte[]> EncodeAsync(ImageFormat format, int? quality = null, CancellationToken cancellationToken = default)
+    public async Task<byte[]> EncodeAsync(ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
     {
-        return await Task.Run(() => Encode(format, quality), cancellationToken);
+        return await Task.Run(() => Encode(format, options), cancellationToken);
     }
 
-    public async Task EncodeAsync(Stream stream, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default)
+    public async Task EncodeAsync(Stream stream, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
     {
-        await Task.Run(() => Encode(stream, format, quality), cancellationToken);
+        await Task.Run(() => Encode(stream, format, options), cancellationToken);
     }
 
-    public void Save(string path, ImageFormat format, int? quality = null)
+    public void Save(string path, ImageFormat format, ImageEncodeOptions? options = null)
     {
         ThrowIfDisposed();
         using var stream = File.OpenWrite(path);
-        Encode(stream, format, quality);
+        Encode(stream, format, options);
     }
 
-    public async Task SaveAsync(string path, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default)
+    public async Task SaveAsync(string path, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
         using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
-        await EncodeAsync(stream, format, quality, cancellationToken);
+        await EncodeAsync(stream, format, options, cancellationToken);
     }
 
     // --- Dispose ---
@@ -340,18 +341,6 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
         canvas.DrawBitmap(bitmap, 0, 0);
         return rotated;
-    }
-
-    private static int GetDefaultQuality(ImageFormat format)
-    {
-        return format switch
-        {
-            ImageFormat.Jpeg => 80,
-            ImageFormat.Webp => 80,
-            ImageFormat.Heif => 80,
-            ImageFormat.Avif => 80,
-            _ => 100
-        };
     }
 
     private int GetExpectedPixelBufferSize() => Width * Height * 4;
