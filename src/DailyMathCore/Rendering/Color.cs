@@ -18,18 +18,25 @@ public readonly struct Color : IEquatable<Color>
     /// </summary>
     public const byte DefaultAlphaForArgb = 255;
 
-    // Basic colors
-    public static Color Black => new(0, 0, 0);
-    public static Color White => new(255, 255, 255);
+    // --- Special ---
     public static Color Transparent => new(0, 0, 0, 0);
 
-    // Highly distinct debug colors for border visualization
+    // --- Grayscale ---
+    public static Color Black => new(0, 0, 0);
+    public static Color Gray => new(128, 128, 128);
+    public static Color White => new(255, 255, 255);
+
+    // --- Additive Primaries (RGB) ---
     public static Color Red => new(255, 0, 0);
     public static Color Green => new(0, 255, 0);
     public static Color Blue => new(0, 0, 255);
-    public static Color Yellow => new(255, 255, 0);
+
+    // --- Subtractive Primaries (CMY) ---
     public static Color Cyan => new(0, 255, 255);
     public static Color Magenta => new(255, 0, 255);
+    public static Color Yellow => new(255, 255, 0);
+
+    // --- Common Mixed ---
     public static Color Orange => new(255, 165, 0);
     public static Color Purple => new(128, 0, 128);
 
@@ -103,7 +110,7 @@ public readonly struct Color : IEquatable<Color>
     /// <param name="format">Component order to expect when parsing.</param>
     /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the string.</param>
     /// <exception cref="ArgumentException">Thrown when the string is invalid or not supported.</exception>
-    public static Color Parse(string hexString, ColorStringFormat format, byte? defaultAlpha = null)
+    public static Color Parse(string hexString, ColorStringFormat format = ColorStringFormat.RGBA, byte? defaultAlpha = null)
     {
         if (string.IsNullOrWhiteSpace(hexString))
             throw new ArgumentException("Color string cannot be null or whitespace.", nameof(hexString));
@@ -114,31 +121,49 @@ public readonly struct Color : IEquatable<Color>
     /// <summary>
     /// Parses a color from a hex span in the specified format.
     /// Supports "#RRGGBB", "#RRGGBBAA" (RGBA) and "#AARRGGBB" (ARGB).
+    /// Also supports shorthand "#RGB" and "#RGBA" (or "#ARGB").
     /// When alpha is missing (e.g., "#RRGGBB"), uses <paramref name="defaultAlpha"/> when provided;
     /// otherwise falls back to format-specific defaults (<see cref="DefaultAlphaForRgba"/> or <see cref="DefaultAlphaForArgb"/>).
     /// No allocation; directly parses hex digits.
     /// </summary>
     /// <param name="hexString">Hex span beginning with '#'. Case-insensitive.</param>
     /// <param name="format">Component order to expect when parsing.</param>
-    /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the string.</param>
+    /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the span.</param>
     /// <exception cref="ArgumentException">Thrown when the span is invalid or not supported.</exception>
-    public static Color Parse(ReadOnlySpan<char> hexString, ColorStringFormat format, byte? defaultAlpha = null)
+    public static Color Parse(ReadOnlySpan<char> hexString, ColorStringFormat format = ColorStringFormat.RGBA, byte? defaultAlpha = null)
     {
         // Remove leading '#' if present
         if (hexString.Length > 0 && hexString[0] == '#')
             hexString = hexString[1..];
 
-        // Expected lengths: 6 or 8
-        if (hexString.Length != 6 && hexString.Length != 8)
-            throw new ArgumentException($"Unsupported hex length for {format}. Use 6 characters (#RRGGBB) or 8 characters (with alpha).");
+        // Expand shorthand #RGB -> #RRGGBB or #RGBA -> #RRGGBBAA
+        // Since we are operating on ReadOnlySpan, we can't mutate. 
+        // We will handle shorthand logic by mapping indices virtually or parsing digits directly.
+        // Or simpler: handle expansion logic inside the byte parsing flow if length is 3 or 4.
+        
+        bool isShorthand = hexString.Length == 3 || hexString.Length == 4;
+        bool hasAlpha = hexString.Length == 4 || hexString.Length == 8;
 
-        byte ParseHexByte(ReadOnlySpan<char> hex)
+        if (hexString.Length != 3 && hexString.Length != 4 && hexString.Length != 6 && hexString.Length != 8)
+            throw new ArgumentException($"Unsupported hex length ({hexString.Length}). Use 3, 4, 6, or 8 characters.");
+
+        byte ParseComponent(ReadOnlySpan<char> hex, int index)
         {
-            int high = ParseHexDigit(hex[0]);
-            int low = ParseHexDigit(hex[1]);
-            if (high < 0 || low < 0)
-                throw new ArgumentException("Invalid hex digit in color string.");
-            return (byte)((high << 4) | low);
+            if (isShorthand)
+            {
+                // Shorthand: Single digit becomes double (e.g., 'A' -> "AA" -> 0xAA)
+                int digit = ParseHexDigit(hex[index]);
+                if (digit < 0) throw new ArgumentException("Invalid hex digit.");
+                return (byte)((digit << 4) | digit);
+            }
+            else
+            {
+                // Full: Two digits
+                int high = ParseHexDigit(hex[index * 2]);
+                int low = ParseHexDigit(hex[index * 2 + 1]);
+                if (high < 0 || low < 0) throw new ArgumentException("Invalid hex digit.");
+                return (byte)((high << 4) | low);
+            }
         }
 
         byte r, g, b, a;
@@ -146,29 +171,29 @@ public readonly struct Color : IEquatable<Color>
         switch (format)
         {
             case ColorStringFormat.RGBA:
-                r = ParseHexByte(hexString[0..2]);
-                g = ParseHexByte(hexString[2..4]);
-                b = ParseHexByte(hexString[4..6]);
-
-                if (hexString.Length == 8)
-                    a = ParseHexByte(hexString[6..8]);
+                r = ParseComponent(hexString, 0);
+                g = ParseComponent(hexString, 1);
+                b = ParseComponent(hexString, 2);
+                
+                if (hasAlpha)
+                    a = ParseComponent(hexString, 3);
                 else
                     a = defaultAlpha ?? DefaultAlphaForRgba;
                 break;
 
             case ColorStringFormat.ARGB:
-                if (hexString.Length == 8)
+                if (hasAlpha)
                 {
-                    a = ParseHexByte(hexString[0..2]);
-                    r = ParseHexByte(hexString[2..4]);
-                    g = ParseHexByte(hexString[4..6]);
-                    b = ParseHexByte(hexString[6..8]);
+                    a = ParseComponent(hexString, 0);
+                    r = ParseComponent(hexString, 1);
+                    g = ParseComponent(hexString, 2);
+                    b = ParseComponent(hexString, 3);
                 }
                 else
                 {
-                    r = ParseHexByte(hexString[0..2]);
-                    g = ParseHexByte(hexString[2..4]);
-                    b = ParseHexByte(hexString[4..6]);
+                    r = ParseComponent(hexString, 0);
+                    g = ParseComponent(hexString, 1);
+                    b = ParseComponent(hexString, 2);
                     a = defaultAlpha ?? DefaultAlphaForArgb;
                 }
                 break;
@@ -198,16 +223,17 @@ public readonly struct Color : IEquatable<Color>
     /// <summary>
     /// Attempts to parse a color from a hex string in the specified format.
     /// Supports "#RRGGBB", "#RRGGBBAA" (RGBA) and "#AARRGGBB" (ARGB).
+    /// Also supports shorthand "#RGB" and "#RGBA" (or "#ARGB").
     /// When alpha is missing (e.g., "#RRGGBB"), uses <paramref name="defaultAlpha"/> when provided;
     /// otherwise falls back to format-specific defaults (<see cref="DefaultAlphaForRgba"/> or <see cref="DefaultAlphaForArgb"/>).
     /// Returns false if the string is invalid or parsing fails; does not throw.
     /// </summary>
     /// <param name="hexString">Hex string beginning with '#'. Case-insensitive.</param>
-    /// <param name="format">Component order to expect when parsing.</param>
     /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Black"/>.</param>
+    /// <param name="format">Component order to expect when parsing.</param>
     /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the string.</param>
     /// <returns>True if parsing succeeded; false if the string is invalid or unsupported.</returns>
-    public static bool TryParse(string hexString, ColorStringFormat format, out Color color, byte? defaultAlpha = null)
+    public static bool TryParse(string hexString, out Color color, ColorStringFormat format = ColorStringFormat.RGBA, byte? defaultAlpha = null)
     {
         try
         {
@@ -224,16 +250,17 @@ public readonly struct Color : IEquatable<Color>
     /// <summary>
     /// Attempts to parse a color from a hex span in the specified format.
     /// Supports "#RRGGBB", "#RRGGBBAA" (RGBA) and "#AARRGGBB" (ARGB).
+    /// Also supports shorthand "#RGB" and "#RGBA" (or "#ARGB").
     /// When alpha is missing (e.g., "#RRGGBB"), uses <paramref name="defaultAlpha"/> when provided;
     /// otherwise falls back to format-specific defaults (<see cref="DefaultAlphaForRgba"/> or <see cref="DefaultAlphaForArgb"/>).
     /// Returns false if the span is invalid or parsing fails; does not throw. No allocation.
     /// </summary>
     /// <param name="hexString">Hex span beginning with '#'. Case-insensitive.</param>
-    /// <param name="format">Component order to expect when parsing.</param>
     /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Black"/>.</param>
+    /// <param name="format">Component order to expect when parsing.</param>
     /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the span.</param>
     /// <returns>True if parsing succeeded; false if the span is invalid or unsupported.</returns>
-    public static bool TryParse(ReadOnlySpan<char> hexString, ColorStringFormat format, out Color color, byte? defaultAlpha = null)
+    public static bool TryParse(ReadOnlySpan<char> hexString, out Color color, ColorStringFormat format = ColorStringFormat.RGBA, byte? defaultAlpha = null)
     {
         try
         {

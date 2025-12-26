@@ -3,6 +3,7 @@
 /// <summary>
 /// Specifies the component order used when converting colors to and from strings.
 /// Intended for textual hex representations (e.g., "#RRGGBB", "#AARRGGBB").
+/// It is distinct from <see cref="PixelFormat"/>, which describes the layout of raw pixel data in memory.
 /// </summary>
 public enum ColorStringFormat
 {
