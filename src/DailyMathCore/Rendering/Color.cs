@@ -137,10 +137,10 @@ public readonly struct Color : IEquatable<Color>
             hexString = hexString[1..];
 
         // Expand shorthand #RGB -> #RRGGBB or #RGBA -> #RRGGBBAA
-        // Since we are operating on ReadOnlySpan, we can't mutate. 
+        // Since we are operating on ReadOnlySpan, we can't mutate.
         // We will handle shorthand logic by mapping indices virtually or parsing digits directly.
         // Or simpler: handle expansion logic inside the byte parsing flow if length is 3 or 4.
-        
+
         bool isShorthand = hexString.Length == 3 || hexString.Length == 4;
         bool hasAlpha = hexString.Length == 4 || hexString.Length == 8;
 
@@ -174,7 +174,7 @@ public readonly struct Color : IEquatable<Color>
                 r = ParseComponent(hexString, 0);
                 g = ParseComponent(hexString, 1);
                 b = ParseComponent(hexString, 2);
-                
+
                 if (hasAlpha)
                     a = ParseComponent(hexString, 3);
                 else
@@ -229,7 +229,7 @@ public readonly struct Color : IEquatable<Color>
     /// Returns false if the string is invalid or parsing fails; does not throw.
     /// </summary>
     /// <param name="hexString">Hex string beginning with '#'. Case-insensitive.</param>
-    /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Black"/>.</param>
+    /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Transparent"/>.</param>
     /// <param name="format">Component order to expect when parsing.</param>
     /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the string.</param>
     /// <returns>True if parsing succeeded; false if the string is invalid or unsupported.</returns>
@@ -242,7 +242,7 @@ public readonly struct Color : IEquatable<Color>
         }
         catch
         {
-            color = default;
+            color = Transparent;
             return false;
         }
     }
@@ -256,7 +256,7 @@ public readonly struct Color : IEquatable<Color>
     /// Returns false if the span is invalid or parsing fails; does not throw. No allocation.
     /// </summary>
     /// <param name="hexString">Hex span beginning with '#'. Case-insensitive.</param>
-    /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Black"/>.</param>
+    /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Transparent"/>.</param>
     /// <param name="format">Component order to expect when parsing.</param>
     /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the span.</param>
     /// <returns>True if parsing succeeded; false if the span is invalid or unsupported.</returns>
@@ -269,7 +269,7 @@ public readonly struct Color : IEquatable<Color>
         }
         catch
         {
-            color = default;
+            color = Transparent;
             return false;
         }
     }

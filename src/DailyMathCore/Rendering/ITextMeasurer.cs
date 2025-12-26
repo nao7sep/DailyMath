@@ -32,11 +32,5 @@ public interface ITextMeasurer
     /// <param name="minSizeInPoints">The minimum font size to check (default 6pt - typical minimum readable size).</param>
     /// <param name="maxSizeInPoints">The maximum font size to check (default 72pt - 1 inch, typical document maximum).</param>
     /// <returns>The optimized font size in Points.</returns>
-    double GetMaxFontSize(
-        string text,
-        FontSpec baseFont,
-        Measure bounds,
-        double dpi,
-        double minSizeInPoints = 6,
-        double maxSizeInPoints = 72);
+    double GetMaxFontSize(string text, FontSpec baseFont, Measure bounds, double dpi, double minSizeInPoints = 6, double maxSizeInPoints = 72);
 }
