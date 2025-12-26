@@ -267,14 +267,25 @@ public class WpfTextMeasurer : ITextMeasurer
     /// </summary>
     private static double GetTightHeightFactor(Typeface typeface)
     {
-        // Try to get exact metrics from the font file
-        if (typeface.TryGetGlyphTypeface(out var glyphTypeface))
-        {
-            return glyphTypeface.Ascent + glyphTypeface.Descent;
-        }
+        // Use a probe text to determine the actual rendering metrics used by WPF.
+        // We use "Hg" to ensure we capture both the Ascender (H) and Descender (g).
+        var probeText = new FormattedText(
+            "Hg",
+            CultureInfo.InvariantCulture,
+            FlowDirection.LeftToRight,
+            typeface,
+            100.0, // Large EM size for precision
+            Brushes.Black,
+            1.0);  // 1.0 pixels per DIP
 
-        // Fallback for composite fonts (approximate, may differ slightly)
-        return typeface.FontFamily.LineSpacing;
+        // Calculate metrics from the probe
+        // Ascent: Distance from Top to Baseline
+        // Descent: Distance from Baseline to Bottom (derived from total Height)
+        double ascent = probeText.Baseline;
+        double descent = probeText.Height - probeText.Baseline;
+
+        // Normalized factor (Ratio of Total Height to Em Size)
+        return (ascent + descent) / 100.0;
     }
 
     /// <summary>

@@ -1,0 +1,358 @@
+using System;
+using System.IO;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using DailyMath.Core.Rendering;
+using DailyMath.Core.Layout;
+
+// Alias to resolve ambiguity
+using CoreColor = DailyMath.Core.Rendering.Color;
+using WpfColor = System.Windows.Media.Color;
+
+namespace DailyMath.Core.Windows;
+
+/// <summary>
+/// WPF implementation of a mutable raster image.
+/// Wraps a WriteableBitmap for pixel manipulation.
+/// </summary>
+public sealed class WpfImage : IImage<WpfImage>
+{
+    private WriteableBitmap _bitmap;
+    private bool _disposed;
+
+    // --- Properties ---
+
+    /// <summary>
+    /// Gets the underlying WPF WriteableBitmap.
+    /// </summary>
+    public WriteableBitmap Bitmap
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _bitmap;
+        }
+    }
+
+    public int Width => _bitmap.PixelWidth;
+    public int Height => _bitmap.PixelHeight;
+
+    public DailyMath.Core.Rendering.PixelFormat PixelFormat => DailyMath.Core.Rendering.PixelFormat.Bgra8888;
+
+    // --- Constructor ---
+
+    private WpfImage(WriteableBitmap bitmap)
+    {
+        _bitmap = bitmap ?? throw new ArgumentNullException(nameof(bitmap));
+    }
+
+    // --- Factory Methods ---
+
+    public static WpfImage Create(int width, int height)
+    {
+        if (width <= 0 || height <= 0)
+            throw new ArgumentException("Dimensions must be positive.");
+
+        var bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+        return new WpfImage(bitmap);
+    }
+
+    public static WpfImage Load(string path)
+    {
+        if (!File.Exists(path))
+            throw new FileNotFoundException("Image file not found.", path);
+
+        using var stream = File.OpenRead(path);
+        return LoadFromStreamInternal(stream);
+    }
+
+    public static async Task<WpfImage> LoadAsync(string path, CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(path))
+            throw new FileNotFoundException("Image file not found.", path);
+            
+        byte[] data;
+        using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true))
+        {
+            data = new byte[stream.Length];
+            await stream.ReadAsync(data, cancellationToken);
+        }
+        return Load(data);
+    }
+
+    public static WpfImage Load(ReadOnlySpan<byte> data)
+    {
+        using var stream = new MemoryStream(data.ToArray());
+        return LoadFromStreamInternal(stream);
+    }
+
+    public static async Task<WpfImage> LoadAsync(Stream stream, CancellationToken cancellationToken = default)
+    {
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms, cancellationToken);
+        ms.Position = 0;
+        return LoadFromStreamInternal(ms);
+    }
+
+    // --- Pixel Access ---
+
+    public CoreColor GetPixel(int x, int y)
+    {
+        ThrowIfDisposed();
+        CheckBounds(x, y);
+
+        byte[] pixelData = new byte[4];
+        int stride = 4;
+        
+        _bitmap.CopyPixels(new Int32Rect(x, y, 1, 1), pixelData, stride, 0);
+
+        byte b = pixelData[0];
+        byte g = pixelData[1];
+        byte r = pixelData[2];
+        byte a = pixelData[3];
+
+        return new CoreColor(r, g, b, a);
+    }
+
+    public void SetPixel(int x, int y, CoreColor color)
+    {
+        ThrowIfDisposed();
+        CheckBounds(x, y);
+
+        byte[] pixelData = new byte[4];
+        pixelData[0] = color.B;
+        pixelData[1] = color.G;
+        pixelData[2] = color.R;
+        pixelData[3] = color.A;
+
+        int stride = 4;
+        _bitmap.WritePixels(new Int32Rect(x, y, 1, 1), pixelData, stride, 0);
+    }
+
+    public void CopyPixels(Span<byte> destination)
+    {
+        ThrowIfDisposed();
+
+        int expectedSize = Width * Height * 4;
+        if (destination.Length < expectedSize)
+            throw new ArgumentException($"Destination span is too small. Expected {expectedSize} bytes.", nameof(destination));
+
+        _bitmap.Lock();
+        try
+        {
+            int stride = _bitmap.BackBufferStride;
+            int widthBytes = Width * 4;
+
+            unsafe
+            {
+                byte* srcPtr = (byte*)_bitmap.BackBuffer.ToPointer();
+                fixed (byte* dstPtr = destination)
+                {
+                    if (stride == widthBytes)
+                    {
+                        Buffer.MemoryCopy(srcPtr, dstPtr, destination.Length, expectedSize);
+                    }
+                    else
+                    {
+                        for (int y = 0; y < Height; y++)
+                        {
+                            Buffer.MemoryCopy(srcPtr + (y * stride), dstPtr + (y * widthBytes), widthBytes, widthBytes);
+                        }
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _bitmap.Unlock();
+        }
+    }
+
+    public void WritePixels(ReadOnlySpan<byte> source)
+    {
+        ThrowIfDisposed();
+
+        int expectedSize = Width * Height * 4;
+        if (source.Length < expectedSize)
+            throw new ArgumentException($"Source span is too small. Expected {expectedSize} bytes.", nameof(source));
+
+        _bitmap.Lock();
+        try
+        {
+            int stride = _bitmap.BackBufferStride;
+            int widthBytes = Width * 4;
+
+            unsafe
+            {
+                byte* dstPtr = (byte*)_bitmap.BackBuffer.ToPointer();
+                fixed (byte* srcPtr = source)
+                {
+                    if (stride == widthBytes)
+                    {
+                        Buffer.MemoryCopy(srcPtr, dstPtr, expectedSize, expectedSize);
+                    }
+                    else
+                    {
+                        for (int y = 0; y < Height; y++)
+                        {
+                            Buffer.MemoryCopy(srcPtr + (y * widthBytes), dstPtr + (y * stride), widthBytes, widthBytes);
+                        }
+                    }
+                }
+            }
+            _bitmap.AddDirtyRect(new Int32Rect(0, 0, Width, Height));
+        }
+        finally
+        {
+            _bitmap.Unlock();
+        }
+    }
+
+    // --- Transformation ---
+
+    public void Resize(int newWidth, int newHeight)
+    {
+        ThrowIfDisposed();
+        if (newWidth <= 0 || newHeight <= 0)
+            throw new ArgumentException("Dimensions must be positive.");
+
+        var scaleX = (double)newWidth / Width;
+        var scaleY = (double)newHeight / Height;
+
+        var transform = new ScaleTransform(scaleX, scaleY);
+        var transformed = new TransformedBitmap(_bitmap, transform);
+        
+        _bitmap = new WriteableBitmap(transformed);
+    }
+
+    // --- Rendering ---
+
+    public IRenderer CreateRenderer()
+    {
+        ThrowIfDisposed();
+        return new WpfRenderer(_bitmap);
+    }
+
+    // --- I/O ---
+
+    public byte[] Encode(ImageFormat format, int? quality = null)
+    {
+        using var ms = new MemoryStream();
+        Encode(ms, format, quality);
+        return ms.ToArray();
+    }
+
+    public void Encode(Stream stream, ImageFormat format, int? quality = null)
+    {
+        ThrowIfDisposed();
+        BitmapEncoder encoder = format switch
+        {
+            ImageFormat.Png => new PngBitmapEncoder(),
+            ImageFormat.Jpeg => new JpegBitmapEncoder(),
+            ImageFormat.Bmp => new BmpBitmapEncoder(),
+            ImageFormat.Gif => new GifBitmapEncoder(),
+            ImageFormat.Tiff => new TiffBitmapEncoder(),
+            _ => throw new NotSupportedException($"Format {format} is not supported by WpfImage implementation.")
+        };
+
+        if (encoder is JpegBitmapEncoder jpegEncoder)
+        {
+            jpegEncoder.QualityLevel = quality ?? 80;
+        }
+
+        encoder.Frames.Add(BitmapFrame.Create(_bitmap));
+        encoder.Save(stream);
+    }
+
+    public async Task<byte[]> EncodeAsync(ImageFormat format, int? quality = null, CancellationToken cancellationToken = default)
+    {
+        return await Task.FromResult(Encode(format, quality));
+    }
+
+    public async Task EncodeAsync(Stream stream, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default)
+    {
+        await Task.Run(() => Encode(stream, format, quality), cancellationToken);
+    }
+
+    public void Save(string path, ImageFormat format, int? quality = null)
+    {
+        ThrowIfDisposed();
+        using var stream = File.OpenWrite(path);
+        Encode(stream, format, quality);
+    }
+
+    public async Task SaveAsync(string path, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+        await EncodeAsync(stream, format, quality, cancellationToken);
+    }
+
+    // --- Dispose ---
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _bitmap = null!;
+            _disposed = true;
+        }
+    }
+
+    // --- Helpers ---
+
+    private static WpfImage LoadFromStreamInternal(Stream stream)
+    {
+        var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
+        var frame = decoder.Frames[0];
+        
+        BitmapSource source = frame;
+
+        if (frame.Metadata is BitmapMetadata metadata && metadata.ContainsQuery("System.Photo.Orientation"))
+        {
+            var orientation = metadata.GetQuery("System.Photo.Orientation");
+            if (orientation != null)
+            {
+                source = ApplyOrientation(source, (ushort)orientation);
+            }
+        }
+
+        if (source.Format != PixelFormats.Bgra32)
+        {
+            source = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
+        }
+
+        return new WpfImage(new WriteableBitmap(source));
+    }
+
+    private static BitmapSource ApplyOrientation(BitmapSource source, ushort orientation)
+    {
+        Transform? transform = orientation switch
+        {
+            2 => new ScaleTransform(-1, 1),
+            3 => new RotateTransform(180),
+            4 => new ScaleTransform(1, -1),
+            5 => new TransformGroup { Children = { new ScaleTransform(-1, 1), new RotateTransform(270) } },
+            6 => new RotateTransform(90),
+            7 => new TransformGroup { Children = { new ScaleTransform(-1, 1), new RotateTransform(90) } },
+            8 => new RotateTransform(270),
+            _ => null
+        };
+
+        if (transform == null) return source;
+        return new TransformedBitmap(source, transform);
+    }
+
+    private void CheckBounds(int x, int y)
+    {
+        if (x < 0 || x >= Width || y < 0 || y >= Height)
+            throw new ArgumentOutOfRangeException("Coordinates are out of bounds.");
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(WpfImage));
+    }
+}

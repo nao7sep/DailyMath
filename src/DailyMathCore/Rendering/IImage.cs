@@ -1,6 +1,9 @@
 namespace DailyMath.Core.Rendering;
 
 using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Represents a platform-agnostic, mutable raster image (grid of pixels).
@@ -8,6 +11,8 @@ using System;
 /// </summary>
 public interface IImage : IDisposable
 {
+    // --- Properties ---
+
     /// <summary>
     /// Gets the width of the image in pixels.
     /// </summary>
@@ -17,6 +22,13 @@ public interface IImage : IDisposable
     /// Gets the height of the image in pixels.
     /// </summary>
     int Height { get; }
+
+    /// <summary>
+    /// Gets the pixel format of the raw image data.
+    /// </summary>
+    PixelFormat PixelFormat { get; }
+
+    // --- Pixel Access ---
 
     /// <summary>
     /// Gets the color of the pixel at the specified coordinates.
@@ -29,71 +41,78 @@ public interface IImage : IDisposable
     void SetPixel(int x, int y, Color color);
 
     /// <summary>
+    /// Copies the raw pixel data to the specified destination span.
+    /// The destination span must be at least Width * Height * 4 bytes.
+    /// </summary>
+    void CopyPixels(Span<byte> destination);
+
+    /// <summary>
+    /// Writes raw pixel data from the specified source span into the image.
+    /// The source span must be at least Width * Height * 4 bytes.
+    /// </summary>
+    void WritePixels(ReadOnlySpan<byte> source);
+
+    // --- Transformation ---
+
+    /// <summary>
     /// Rescales the image to the specified dimensions.
-    /// Implementation should use high-quality interpolation suitable for scaling.
     /// </summary>
     void Resize(int newWidth, int newHeight);
 
     /// <summary>
     /// Rescales the image to fit/cover the specified target dimensions based on the scaling mode.
-    /// Calculates the correct aspect-conserving dimensions and calls <see cref="Resize(int, int)"/>.
-    /// 
-    /// <para>
-    /// <strong>Implementation Note:</strong> This is a Default Interface Method (C# 8.0+).
-    /// It provides shared logic for aspect ratio calculation so implementing classes only need 
-    /// to provide the raw <see cref="Resize(int, int)"/> logic.
-    /// </para>
     /// </summary>
-    /// <param name="targetWidth">The width of the bounding box.</param>
-    /// <param name="targetHeight">The height of the bounding box.</param>
-    /// <param name="scaling">The scaling logic to apply.</param>
     public void Resize(int targetWidth, int targetHeight, ImageScaling scaling)
     {
-        if (scaling == ImageScaling.None) return;
-        if (scaling == ImageScaling.Stretch)
-        {
-            Resize(targetWidth, targetHeight);
+        var (newW, newH) = DailyMath.Core.Layout.LayoutCalculator.Scale(Width, Height, targetWidth, targetHeight, scaling);
+
+        if (Math.Abs(newW - Width) < 0.5 && Math.Abs(newH - Height) < 0.5) 
             return;
-        }
 
-        double widthRatio = (double)targetWidth / Width;
-        double heightRatio = (double)targetHeight / Height;
-        double scaleFactor = 1.0;
-
-        switch (scaling)
-        {
-            case ImageScaling.Fit:
-                scaleFactor = Math.Min(widthRatio, heightRatio);
-                break;
-            case ImageScaling.FitDownOnly:
-                scaleFactor = Math.Min(1.0, Math.Min(widthRatio, heightRatio));
-                break;
-            case ImageScaling.Cover:
-                scaleFactor = Math.Max(widthRatio, heightRatio);
-                break;
-        }
-
-        if (Math.Abs(scaleFactor - 1.0) < 0.001) return;
-
-        int finalWidth = (int)Math.Round(Width * scaleFactor);
-        int finalHeight = (int)Math.Round(Height * scaleFactor);
-        
-        // Ensure at least 1px
-        finalWidth = Math.Max(1, finalWidth);
-        finalHeight = Math.Max(1, finalHeight);
+        int finalWidth = Math.Max(1, (int)Math.Round(newW));
+        int finalHeight = Math.Max(1, (int)Math.Round(newH));
 
         Resize(finalWidth, finalHeight);
     }
 
+    // --- Rendering ---
+
     /// <summary>
-    /// Encodes and saves the image to the specified file path.
+    /// Creates a renderer for drawing directly onto this image.
     /// </summary>
-    void Save(string path, ImageFormat format = ImageFormat.Png);
+    IRenderer CreateRenderer();
+
+    // --- I/O ---
 
     /// <summary>
     /// Encodes the image to a byte array.
     /// </summary>
-    byte[] Encode(ImageFormat format = ImageFormat.Png);
+    byte[] Encode(ImageFormat format, int? quality = null);
+
+    /// <summary>
+    /// Encodes the image to the specified stream.
+    /// </summary>
+    void Encode(Stream stream, ImageFormat format, int? quality = null);
+
+    /// <summary>
+    /// Asynchronously encodes the image to a byte array.
+    /// </summary>
+    Task<byte[]> EncodeAsync(ImageFormat format, int? quality = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Asynchronously encodes the image to the specified stream.
+    /// </summary>
+    Task EncodeAsync(Stream stream, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Encodes and saves the image to the specified file path.
+    /// </summary>
+    void Save(string path, ImageFormat format, int? quality = null);
+
+    /// <summary>
+    /// Asynchronously encodes and saves the image to the specified file path.
+    /// </summary>
+    Task SaveAsync(string path, ImageFormat format, int? quality = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -112,7 +131,17 @@ public interface IImage<TSelf> : IImage where TSelf : IImage<TSelf>
     static abstract TSelf Load(string path);
 
     /// <summary>
+    /// Asynchronously loads an image from a file.
+    /// </summary>
+    static abstract Task<TSelf> LoadAsync(string path, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads an image from encoded byte data.
     /// </summary>
     static abstract TSelf Load(ReadOnlySpan<byte> data);
+    
+    /// <summary>
+    /// Asynchronously loads an image from a stream.
+    /// </summary>
+    static abstract Task<TSelf> LoadAsync(Stream stream, CancellationToken cancellationToken = default);
 }
