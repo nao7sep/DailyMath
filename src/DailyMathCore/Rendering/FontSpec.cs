@@ -2,17 +2,14 @@
 
 namespace DailyMath.Core.Rendering;
 
+using DailyMath.Core.Layout;
+
 /// <summary>
 /// Defines the complete specification for a font configuration.
 /// Immutable struct designed for thread-safety and predictability in layout engines.
 /// </summary>
 public readonly struct FontSpec : IEquatable<FontSpec>
 {
-    /// <summary>
-    /// The number of Points per inch. This is a universal constant in digital typography.
-    /// </summary>
-    public const double PointsPerInch = 72.0;
-
     /// <summary>
     /// Gets the font family name (e.g., "Arial", "Consolas").
     /// </summary>
@@ -110,21 +107,33 @@ public readonly struct FontSpec : IEquatable<FontSpec>
                Style == other.Style;
     }
 
+    /// <summary>
+    /// Determines whether the specified object is equal to this font specification.
+    /// </summary>
     public override bool Equals(object? obj)
     {
         return obj is FontSpec spec && Equals(spec);
     }
 
+    /// <summary>
+    /// Returns a hash code for this font specification.
+    /// </summary>
     public override int GetHashCode()
     {
         return HashCode.Combine(Family, SizeInPoints, Weight, Style);
     }
 
+    /// <summary>
+    /// Determines whether two font specifications are equal.
+    /// </summary>
     public static bool operator ==(FontSpec left, FontSpec right)
     {
         return left.Equals(right);
     }
 
+    /// <summary>
+    /// Determines whether two font specifications are not equal.
+    /// </summary>
     public static bool operator !=(FontSpec left, FontSpec right)
     {
         return !(left == right);

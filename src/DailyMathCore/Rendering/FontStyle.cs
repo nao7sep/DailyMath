@@ -34,7 +34,6 @@ public enum FontStyle
     /// <summary>
     /// A line drawn above the text.
     /// Supported by CSS and modern UI frameworks.
-    /// (Note: GDI+ renderers may ignore this if manual drawing is not implemented).
     /// </summary>
     Overline = 8
 }

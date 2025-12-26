@@ -15,9 +15,28 @@
 /// </summary>
 public readonly struct Region
 {
+    /// <summary>
+    /// The left edge position in pixels.
+    /// Represents the X coordinate of the region's left boundary.
+    /// </summary>
     public double Left { get; }
+
+    /// <summary>
+    /// The top edge position in pixels.
+    /// Represents the Y coordinate of the region's top boundary.
+    /// </summary>
     public double Top { get; }
+
+    /// <summary>
+    /// The right edge position in pixels.
+    /// Represents the X coordinate of the region's right boundary.
+    /// </summary>
     public double Right { get; }
+
+    /// <summary>
+    /// The bottom edge position in pixels.
+    /// Represents the Y coordinate of the region's bottom boundary.
+    /// </summary>
     public double Bottom { get; }
 
     /// <summary>
