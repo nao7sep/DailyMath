@@ -10,6 +10,11 @@ namespace DailyMath.Core.Skia;
 ///
 /// This class handles the calculation of text dimensions using SkiaSharp's font rendering engine.
 /// It provides reliable text measurement and font size optimization for layout calculations.
+///
+/// Design Note: Text decorations (Underline, Strikethrough, Overline) are intentionally not
+/// handled here because they do not affect the tight bounding box (Ascent + Descent).
+/// The Measurer's responsibility is to calculate dimensions; decorations are purely visual
+/// and are fully handled during rendering in the Renderer classes.
 /// </summary>
 public class SkiaTextMeasurer : ITextMeasurer
 {
