@@ -14,15 +14,15 @@ namespace DailyMath.Core.Skia;
 public sealed class SkiaRenderer : IRenderer
 {
     // --- Caching ---
-    
+
     private static readonly ConcurrentDictionary<(string?, FontWeight, bool), SKTypeface> _typefaceCache = new();
 
     // --- Fields ---
 
     private readonly SKCanvas _canvas;
     private readonly bool _ownsCanvas;
-    private readonly SKPaint _paint; 
-    private readonly SKFont _font;   
+    private readonly SKPaint _paint;
+    private readonly SKFont _font;
     private bool _disposed;
 
     // --- Constructor ---
@@ -36,7 +36,7 @@ public sealed class SkiaRenderer : IRenderer
     {
         _canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
         _ownsCanvas = ownsCanvas;
-        
+
         _paint = new SKPaint { IsAntialias = true };
         _font = new SKFont { Subpixel = true, Edging = SKFontEdging.SubpixelAntialias };
     }
@@ -78,7 +78,7 @@ public sealed class SkiaRenderer : IRenderer
 
         ResetPaint();
         _paint.Color = ToSkColor(color);
-        
+
         _font.Typeface = GetTypefaceCached(font);
         _font.Size = (float)(font.SizeInPoints * (dpi / 72.0));
 
@@ -99,16 +99,16 @@ public sealed class SkiaRenderer : IRenderer
         double optimalSize = minSizePoints;
 
         _font.Typeface = GetTypefaceCached(baseFont);
-        
+
         while (high - low > 0.5)
         {
             double mid = (low + high) / 2.0;
             float pixelSize = (float)(mid * (dpi / 72.0));
-            
+
             _font.Size = pixelSize;
             _font.MeasureText(text, out var bounds, _paint);
-            
-            float textHeight = _font.Spacing; 
+
+            float textHeight = _font.Spacing;
             float textWidth = bounds.Width;
 
             bool fitsWidth = fitMode == TextFitMode.HeightOnly || textWidth <= region.Width;
@@ -144,6 +144,9 @@ public sealed class SkiaRenderer : IRenderer
         {
             _paint.Style = SKPaintStyle.Stroke;
             _paint.Color = ToSkColor(strokeColor.Value);
+            // SkiaSharp centers strokes on the stroke path by default.
+            // This means for a 2px stroke on a rect at {0,0,100,100}, the outer 1px extends outside the logical bounds.
+            // This is intentional—it prevents double borders when adjacent rects share edges (e.g., table cells).
             _paint.StrokeWidth = (float)strokeThickness;
             _canvas.DrawRect(rect, _paint);
         }
@@ -155,7 +158,7 @@ public sealed class SkiaRenderer : IRenderer
         _paint.Style = SKPaintStyle.Stroke;
         _paint.Color = ToSkColor(color);
         _paint.StrokeWidth = (float)thickness;
-        
+
         _canvas.DrawLine((float)start.X, (float)start.Y, (float)end.X, (float)end.Y, _paint);
     }
 
@@ -177,14 +180,14 @@ public sealed class SkiaRenderer : IRenderer
             byte[] pixels = new byte[width * height * 4];
             image.CopyPixels(pixels);
 
-            var info = new SKImageInfo(width, height, 
-                image.PixelFormat == PixelFormat.Bgra8888 ? SKColorType.Bgra8888 : SKColorType.Rgba8888, 
-                SKAlphaType.Premul); 
-                
+            var info = new SKImageInfo(width, height,
+                image.PixelFormat == PixelFormat.Bgra8888 ? SKColorType.Bgra8888 : SKColorType.Rgba8888,
+                SKAlphaType.Premul);
+
             tempBitmap = new SKBitmap(info);
             var ptr = tempBitmap.GetPixels();
             System.Runtime.InteropServices.Marshal.Copy(pixels, 0, ptr, pixels.Length);
-            
+
             sourceBitmap = tempBitmap;
         }
 
@@ -194,7 +197,7 @@ public sealed class SkiaRenderer : IRenderer
 
             var (newW, newH) = LayoutCalculator.Scale(sourceBitmap.Width, sourceBitmap.Height, region.Width, region.Height, scaling);
             var pos = LayoutCalculator.Align(region, newW, newH, alignment);
-            
+
             var srcRect = new SKRect(0, 0, sourceBitmap.Width, sourceBitmap.Height);
             var destRect = new SKRect((float)pos.X, (float)pos.Y, (float)(pos.X + newW), (float)(pos.Y + newH));
 
@@ -215,10 +218,10 @@ public sealed class SkiaRenderer : IRenderer
         if (!_disposed)
         {
             _paint.Dispose();
-            _font.Dispose(); 
+            _font.Dispose();
             if (_ownsCanvas)
             {
-                _canvas.Dispose(); 
+                _canvas.Dispose();
             }
             _disposed = true;
         }
@@ -239,14 +242,14 @@ public sealed class SkiaRenderer : IRenderer
     private static SKTypeface GetTypefaceCached(FontSpec spec)
     {
         var key = (spec.Family, spec.Weight, spec.Style.HasFlag(DailyMath.Core.Rendering.FontStyle.Italic));
-        
-        return _typefaceCache.GetOrAdd(key, k => 
+
+        return _typefaceCache.GetOrAdd(key, k =>
         {
             var (family, weightEnum, isItalic) = k;
             var weight = (SKFontStyleWeight)(int)weightEnum;
             var slant = isItalic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
 
-            return SKTypeface.FromFamilyName(family, weight, SKFontStyleWidth.Normal, slant) 
+            return SKTypeface.FromFamilyName(family, weight, SKFontStyleWidth.Normal, slant)
                    ?? SKTypeface.FromFamilyName(null, weight, SKFontStyleWidth.Normal, slant);
         });
     }

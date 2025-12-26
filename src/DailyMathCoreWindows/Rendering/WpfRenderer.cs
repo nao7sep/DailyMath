@@ -56,7 +56,7 @@ public sealed class WpfRenderer : IRenderer
         _targetBitmap = target ?? throw new ArgumentNullException(nameof(target));
         _visual = new DrawingVisual();
         _dc = _visual.RenderOpen();
-        _ownsContext = true; 
+        _ownsContext = true;
     }
 
     // --- Element-Based Drawing (High Level) ---
@@ -95,7 +95,7 @@ public sealed class WpfRenderer : IRenderer
         if (string.IsNullOrEmpty(text)) return;
 
         double emSize = font.SizeInPoints * (96.0 / 72.0);
-        
+
         var ft = new FormattedText(
             text,
             CultureInfo.InvariantCulture,
@@ -158,6 +158,9 @@ public sealed class WpfRenderer : IRenderer
         if (strokeColor.HasValue && strokeThickness > 0)
         {
             pen = new Pen(GetBrushCached(strokeColor.Value), strokeThickness);
+            // WPF centers pens on the stroke path by default.
+            // This means for a 2px stroke on a rect at {0,0,100,100}, the outer 1px extends outside the logical bounds.
+            // This is intentional—it prevents double borders when adjacent rects share edges (e.g., table cells).
             pen.Freeze();
         }
 
@@ -190,7 +193,7 @@ public sealed class WpfRenderer : IRenderer
             int stride = width * 4;
             byte[] pixels = new byte[height * stride];
             image.CopyPixels(pixels);
-            
+
             if (image.PixelFormat == DailyMath.Core.Rendering.PixelFormat.Rgba8888)
             {
                 for (int i = 0; i < pixels.Length; i += 4)
@@ -203,7 +206,7 @@ public sealed class WpfRenderer : IRenderer
             }
 
             bitmapSource = BitmapSource.Create(
-                width, height, 96, 96, 
+                width, height, 96, 96,
                 PixelFormats.Bgra32,
                 null, pixels, stride);
             bitmapSource.Freeze();
@@ -211,7 +214,7 @@ public sealed class WpfRenderer : IRenderer
 
         var (newW, newH) = LayoutCalculator.Scale(bitmapSource.PixelWidth, bitmapSource.PixelHeight, region.Width, region.Height, scaling);
         var pos = LayoutCalculator.Align(region, newW, newH, alignment);
-        
+
         var destRect = new Rect(pos.X, pos.Y, newW, newH);
         _dc.DrawImage(bitmapSource, destRect);
     }
@@ -230,10 +233,10 @@ public sealed class WpfRenderer : IRenderer
             if (_targetBitmap != null && _visual != null)
             {
                 var rtb = new RenderTargetBitmap(
-                    _targetBitmap.PixelWidth, _targetBitmap.PixelHeight, 
+                    _targetBitmap.PixelWidth, _targetBitmap.PixelHeight,
                     96, 96, PixelFormats.Pbgra32);
                 rtb.Render(_visual);
-                
+
                 _targetBitmap.Lock();
                 try
                 {
@@ -258,7 +261,7 @@ public sealed class WpfRenderer : IRenderer
 
     private static Brush GetBrushCached(CoreColor c)
     {
-        return _brushCache.GetOrAdd(c, color => 
+        return _brushCache.GetOrAdd(c, color =>
         {
             var brush = new SolidColorBrush(WpfColor.FromArgb(color.A, color.R, color.G, color.B));
             brush.Freeze();
@@ -271,7 +274,7 @@ public sealed class WpfRenderer : IRenderer
         bool isItalic = spec.Style.HasFlag(DailyMath.Core.Rendering.FontStyle.Italic);
         var key = (spec.Family, System.Windows.FontWeight.FromOpenTypeWeight((int)spec.Weight), isItalic);
 
-        return _typefaceCache.GetOrAdd(key, k => 
+        return _typefaceCache.GetOrAdd(key, k =>
         {
             var (family, weight, italic) = k;
             var style = italic ? FontStyles.Italic : FontStyles.Normal;
