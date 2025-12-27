@@ -10,7 +10,7 @@
     <RootNamespace>DailyMath.Core.Wpf.Tests</RootNamespace>
 
     <!-- Version Information - Keep in sync with DailyMathCoreWpf.csproj -->
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
