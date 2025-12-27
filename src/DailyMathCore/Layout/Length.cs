@@ -1,5 +1,7 @@
 ﻿namespace DailyMath.Core.Layout;
 
+using System.Globalization;
+
 /// <summary>
 /// Represents a length measurement with a value and unit.
 /// Immutable struct that can be converted to various units given context (parent size, DPI).
@@ -245,26 +247,29 @@ public readonly struct Length
     // String Representation
 
     /// <summary>
-    /// Converts this length to a string representation with custom number formatting.
+    /// Converts this length to a string representation with the specified format.
     /// </summary>
     /// <param name="format">The numeric format string (e.g., "0.##", "0.###", "F2").
     /// See standard .NET numeric format strings.</param>
+    /// <param name="includeTypeName">If true, prefixes the result with "Length: ".</param>
     /// <returns>A string representation of this length with the specified format.</returns>
-    public string ToString(string format)
+    public string ToString(string format, bool includeTypeName = false)
     {
-        return Unit switch
+        string valueString = Unit switch
         {
-            Unit.Pixels => $"{Value.ToString(format)}px",
-            Unit.Inches => $"{Value.ToString(format)}in",
-            Unit.Millimeters => $"{Value.ToString(format)}mm",
-            Unit.Centimeters => $"{Value.ToString(format)}cm",
-            Unit.Percent => $"{Value.ToString(format)}%",
+            Unit.Pixels => $"{Value.ToString(format, CultureInfo.InvariantCulture)}px",
+            Unit.Inches => $"{Value.ToString(format, CultureInfo.InvariantCulture)}in",
+            Unit.Millimeters => $"{Value.ToString(format, CultureInfo.InvariantCulture)}mm",
+            Unit.Centimeters => $"{Value.ToString(format, CultureInfo.InvariantCulture)}cm",
+            Unit.Percent => $"{Value.ToString(format, CultureInfo.InvariantCulture)}%",
             _ => throw new ArgumentException($"Unsupported unit: {Unit}")
         };
+
+        return includeTypeName ? $"Length: {valueString}" : valueString;
     }
 
     /// <summary>
     /// Converts this length to a string representation with default formatting (up to 2 decimal places).
     /// </summary>
-    public override string ToString() => ToString("0.##");
+    public override string ToString() => ToString("0.##", false);
 }

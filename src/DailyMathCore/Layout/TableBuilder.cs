@@ -33,7 +33,7 @@ public static class TableBuilder
             {
                 var cell = new Element
                 {
-                    Align = Alignment.TopLeft,
+                    Alignment = Alignment.TopLeft,
 
                     // Size as percentage of container's content area
                     Size = new Measure(columnPercent.AsPercent(), rowPercent.AsPercent()),

@@ -133,17 +133,17 @@ public static class LayoutCalculator
     public static Region ApplyPadding(Region region, Inset padding, double dpi)
     {
         // Convert padding to pixels (horizontal relative to width, vertical to height).
-        double leftPadding = padding.Left.ToPixels(dpi, region.Width);
-        double topPadding = padding.Top.ToPixels(dpi, region.Height);
-        double rightPadding = padding.Right.ToPixels(dpi, region.Width);
-        double bottomPadding = padding.Bottom.ToPixels(dpi, region.Height);
+        double left = padding.Left.ToPixels(dpi, region.Width);
+        double top = padding.Top.ToPixels(dpi, region.Height);
+        double right = padding.Right.ToPixels(dpi, region.Width);
+        double bottom = padding.Bottom.ToPixels(dpi, region.Height);
 
         // Move edges inward.
         return new Region(
-            region.Left + leftPadding,
-            region.Top + topPadding,
-            region.Right - rightPadding,
-            region.Bottom - bottomPadding
+            region.Left + left,
+            region.Top + top,
+            region.Right - right,
+            region.Bottom - bottom
         );
     }
 }

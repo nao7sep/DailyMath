@@ -1,5 +1,7 @@
 ﻿namespace DailyMath.Core.Layout;
 
+using System.Globalization;
+
 /// <summary>
 /// Represents a grid of elements arranged in rows and columns.
 /// Provides indexed access to cells but does not manage grid lines -
@@ -76,4 +78,20 @@ public class Table
             bottomRight.Bottom
         );
     }
+
+    /// <summary>
+    /// Returns a string representation of the table's dimensions.
+    /// </summary>
+    /// <param name="includeTypeName">If true, prefixes the result with "Table: ".</param>
+    /// <returns>A string representation of the table.</returns>
+    public string ToString(bool includeTypeName = false)
+    {
+        string dimensions = $"{RowCount.ToString(CultureInfo.InvariantCulture)}x{ColumnCount.ToString(CultureInfo.InvariantCulture)}";
+        return includeTypeName ? $"Table: {dimensions}" : dimensions;
+    }
+
+    /// <summary>
+    /// Returns a string representation of the table's dimensions.
+    /// </summary>
+    public override string ToString() => ToString(false);
 }

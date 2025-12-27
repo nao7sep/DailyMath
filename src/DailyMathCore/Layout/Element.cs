@@ -33,7 +33,7 @@ public class Element
     /// <summary>
     /// Gets or sets how this element is aligned within its parent's content area.
     /// </summary>
-    public Alignment Align { get; set; } = Alignment.TopLeft;
+    public Alignment Alignment { get; set; } = Alignment.TopLeft;
 
     /// <summary>
     /// Gets or sets the margin (space outside this element).
@@ -43,7 +43,7 @@ public class Element
 
     /// <summary>
     /// Gets or sets the desired size of this element.
-    /// Ignored if Align is set to Fill.
+    /// Ignored if Alignment is set to Fill.
     /// </summary>
     public Measure Size { get; set; }
 
@@ -163,7 +163,7 @@ public class Element
         double right;
         double bottom;
 
-        if (Align == Alignment.Fill)
+        if (Alignment == Alignment.Fill)
         {
             // Fill mode: Ignore Size, stretch to fill parent's content area
             // but respect this element's own margins
@@ -179,7 +179,7 @@ public class Element
             double elementHeight = Size.Height.ToPixels(dpi, parentContentHeight);
 
             // Horizontal positioning based on alignment
-            switch (Align)
+            switch (Alignment)
             {
                 case Alignment.TopLeft:
                 case Alignment.BottomLeft:
@@ -201,7 +201,7 @@ public class Element
             }
 
             // Vertical positioning based on alignment
-            switch (Align)
+            switch (Alignment)
             {
                 case Alignment.TopLeft:
                 case Alignment.TopRight:
@@ -224,5 +224,35 @@ public class Element
         }
 
         return new Region(left, top, right, bottom);
+    }
+
+    /// <summary>
+    /// Returns a string representation of the element's key properties.
+    /// </summary>
+    /// <param name="format">The numeric format string for sizes (e.g., "0.##", "F1").</param>
+    /// <param name="includeTypeName">If true, prefixes the result with "Element: ".</param>
+    /// <returns>A string representation of the element.</returns>
+    public string ToString(string format, bool includeTypeName = false)
+    {
+        string alignment = AlignmentToString();
+        string margin = Margin.ToString(format);
+        string size = Size.ToString(format);
+        string padding = Padding.ToString(format);
+        return $"{(includeTypeName ? "Element: " : "")}{alignment}, {margin} ({size}) {padding}";
+    }
+
+    /// <summary>
+    /// Returns a string representation of the element's key properties.
+    /// </summary>
+    public override string ToString() => ToString("0.##", false);
+
+    /// <summary>
+    /// Converts the alignment to a string, validating it is a defined enum value.
+    /// </summary>
+    private string AlignmentToString()
+    {
+        if (!Enum.IsDefined(typeof(Alignment), Alignment))
+            throw new InvalidOperationException($"Invalid Alignment value: {Alignment}");
+        return Alignment.ToString();
     }
 }

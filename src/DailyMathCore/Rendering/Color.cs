@@ -1,5 +1,8 @@
 ﻿namespace DailyMath.Core.Rendering;
 
+using System;
+using System.Globalization;
+
 /// <summary>
 /// Represents a color with red, green, blue, and alpha components.
 /// Platform-agnostic color representation for cross-platform rendering.
@@ -73,7 +76,13 @@ public readonly struct Color : IEquatable<Color>
     /// Converts this color to a hex string using the specified component order.
     /// Alpha inclusion is controlled by <paramref name="alphaInclusion"/>.
     /// </summary>
-    public string ToString(ColorStringFormat format, ColorAlphaInclusion alphaInclusion = ColorAlphaInclusion.WhenNotOpaque)
+    /// <param name="format">The component order (RGBA or ARGB).</param>
+    /// <param name="alphaInclusion">When to include alpha in the output.</param>
+    /// <param name="useLowercase">If true, uses lowercase hex digits (a-f); otherwise uppercase (A-F).</param>
+    /// <param name="includeTypeName">If true, prefixes the result with "Color: ".</param>
+    /// <returns>A hex string representation of the color.</returns>
+    public string ToString(ColorStringFormat format, ColorAlphaInclusion alphaInclusion = ColorAlphaInclusion.WhenNotOpaque,
+        bool useLowercase = false, bool includeTypeName = false)
     {
         bool emitAlpha = alphaInclusion switch
         {
@@ -83,16 +92,20 @@ public readonly struct Color : IEquatable<Color>
             _ => throw new ArgumentException($"Unsupported alpha inclusion option: {alphaInclusion}")
         };
 
-        return format switch
+        string hexFormat = useLowercase ? "x2" : "X2";
+
+        string result = format switch
         {
             ColorStringFormat.RGBA => emitAlpha
-                ? $"#{R:X2}{G:X2}{B:X2}{A:X2}"
-                : $"#{R:X2}{G:X2}{B:X2}",
+                ? $"#{R.ToString(hexFormat, CultureInfo.InvariantCulture)}{G.ToString(hexFormat, CultureInfo.InvariantCulture)}{B.ToString(hexFormat, CultureInfo.InvariantCulture)}{A.ToString(hexFormat, CultureInfo.InvariantCulture)}"
+                : $"#{R.ToString(hexFormat, CultureInfo.InvariantCulture)}{G.ToString(hexFormat, CultureInfo.InvariantCulture)}{B.ToString(hexFormat, CultureInfo.InvariantCulture)}",
             ColorStringFormat.ARGB => emitAlpha
-                ? $"#{A:X2}{R:X2}{G:X2}{B:X2}"
-                : $"#{R:X2}{G:X2}{B:X2}",
+                ? $"#{A.ToString(hexFormat, CultureInfo.InvariantCulture)}{R.ToString(hexFormat, CultureInfo.InvariantCulture)}{G.ToString(hexFormat, CultureInfo.InvariantCulture)}{B.ToString(hexFormat, CultureInfo.InvariantCulture)}"
+                : $"#{R.ToString(hexFormat, CultureInfo.InvariantCulture)}{G.ToString(hexFormat, CultureInfo.InvariantCulture)}{B.ToString(hexFormat, CultureInfo.InvariantCulture)}",
             _ => throw new ArgumentException($"Unsupported color format: {format}")
         };
+
+        return includeTypeName ? $"Color: {result}" : result;
     }
 
     /// <summary>
@@ -101,30 +114,13 @@ public readonly struct Color : IEquatable<Color>
     public override string ToString() => ToString(ColorStringFormat.RGBA, ColorAlphaInclusion.WhenNotOpaque);
 
     /// <summary>
-    /// Parses a color from a hex string in the specified format.
-    /// Supports "#RRGGBB", "#RRGGBBAA" (RGBA) and "#AARRGGBB" (ARGB).
-    /// When alpha is missing (e.g., "#RRGGBB"), uses <paramref name="defaultAlpha"/> when provided;
-    /// otherwise falls back to format-specific defaults (<see cref="DefaultAlphaForRgba"/> or <see cref="DefaultAlphaForArgb"/>).
-    /// </summary>
-    /// <param name="hexString">Hex string beginning with '#'. Case-insensitive.</param>
-    /// <param name="format">Component order to expect when parsing.</param>
-    /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the string.</param>
-    /// <exception cref="ArgumentException">Thrown when the string is invalid or not supported.</exception>
-    public static Color Parse(string hexString, ColorStringFormat format = ColorStringFormat.RGBA, byte? defaultAlpha = null)
-    {
-        if (string.IsNullOrWhiteSpace(hexString))
-            throw new ArgumentException("Color string cannot be null or whitespace.", nameof(hexString));
-
-        return Parse(hexString.AsSpan(), format, defaultAlpha);
-    }
-
-    /// <summary>
     /// Parses a color from a hex span in the specified format.
     /// Supports "#RRGGBB", "#RRGGBBAA" (RGBA) and "#AARRGGBB" (ARGB).
     /// Also supports shorthand "#RGB" and "#RGBA" (or "#ARGB").
     /// When alpha is missing (e.g., "#RRGGBB"), uses <paramref name="defaultAlpha"/> when provided;
     /// otherwise falls back to format-specific defaults (<see cref="DefaultAlphaForRgba"/> or <see cref="DefaultAlphaForArgb"/>).
     /// No allocation; directly parses hex digits.
+    /// Note: Prefixed strings like "Color: #RRGGBB" are not supported; only plain hex strings starting with '#' are parsed.
     /// </summary>
     /// <param name="hexString">Hex span beginning with '#'. Case-insensitive.</param>
     /// <param name="format">Component order to expect when parsing.</param>
@@ -221,39 +217,13 @@ public readonly struct Color : IEquatable<Color>
     }
 
     /// <summary>
-    /// Attempts to parse a color from a hex string in the specified format.
-    /// Supports "#RRGGBB", "#RRGGBBAA" (RGBA) and "#AARRGGBB" (ARGB).
-    /// Also supports shorthand "#RGB" and "#RGBA" (or "#ARGB").
-    /// When alpha is missing (e.g., "#RRGGBB"), uses <paramref name="defaultAlpha"/> when provided;
-    /// otherwise falls back to format-specific defaults (<see cref="DefaultAlphaForRgba"/> or <see cref="DefaultAlphaForArgb"/>).
-    /// Returns false if the string is invalid or parsing fails; does not throw.
-    /// </summary>
-    /// <param name="hexString">Hex string beginning with '#'. Case-insensitive.</param>
-    /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Transparent"/>.</param>
-    /// <param name="format">Component order to expect when parsing.</param>
-    /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the string.</param>
-    /// <returns>True if parsing succeeded; false if the string is invalid or unsupported.</returns>
-    public static bool TryParse(string hexString, out Color color, ColorStringFormat format = ColorStringFormat.RGBA, byte? defaultAlpha = null)
-    {
-        try
-        {
-            color = Parse(hexString, format, defaultAlpha);
-            return true;
-        }
-        catch
-        {
-            color = Transparent;
-            return false;
-        }
-    }
-
-    /// <summary>
     /// Attempts to parse a color from a hex span in the specified format.
     /// Supports "#RRGGBB", "#RRGGBBAA" (RGBA) and "#AARRGGBB" (ARGB).
     /// Also supports shorthand "#RGB" and "#RGBA" (or "#ARGB").
     /// When alpha is missing (e.g., "#RRGGBB"), uses <paramref name="defaultAlpha"/> when provided;
     /// otherwise falls back to format-specific defaults (<see cref="DefaultAlphaForRgba"/> or <see cref="DefaultAlphaForArgb"/>).
     /// Returns false if the span is invalid or parsing fails; does not throw. No allocation.
+    /// Note: Prefixed strings like "Color: #RRGGBB" are not supported; only plain hex strings starting with '#' are parsed.
     /// </summary>
     /// <param name="hexString">Hex span beginning with '#'. Case-insensitive.</param>
     /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Transparent"/>.</param>

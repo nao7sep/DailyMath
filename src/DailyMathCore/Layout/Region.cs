@@ -1,5 +1,7 @@
 ﻿namespace DailyMath.Core.Layout;
 
+using System.Globalization;
+
 /// <summary>
 /// Represents the calculated absolute position and size of an element in pixels.
 /// Stores edges (Left, Top, Right, Bottom) as source of truth to ensure perfect alignment
@@ -63,4 +65,23 @@ public readonly struct Region
         Right = right;
         Bottom = bottom;
     }
+
+    /// <summary>
+    /// Returns a string representation of the region edges with the specified format.
+    /// </summary>
+    /// <param name="format">The numeric format string (e.g., "0.##", "F2").</param>
+    /// <param name="includeTypeName">If true, prefixes the result with "Region: ".</param>
+    /// <returns>A string representation of the region edges.</returns>
+    public string ToString(string format, bool includeTypeName = false)
+    {
+        string edges = $"{Left.ToString(format, CultureInfo.InvariantCulture)}px, {Top.ToString(format, CultureInfo.InvariantCulture)}px, " +
+                       $"{Right.ToString(format, CultureInfo.InvariantCulture)}px, {Bottom.ToString(format, CultureInfo.InvariantCulture)}px";
+        string size = $"{Width.ToString(format, CultureInfo.InvariantCulture)}px, {Height.ToString(format, CultureInfo.InvariantCulture)}px";
+        return includeTypeName ? $"Region: {edges} ({size})" : $"{edges} ({size})";
+    }
+
+    /// <summary>
+    /// Returns a string representation of the region edges and size (e.g., "10px, 20px, 30px, 40px (20px, 20px)").
+    /// </summary>
+    public override string ToString() => ToString("0.##", false);
 }

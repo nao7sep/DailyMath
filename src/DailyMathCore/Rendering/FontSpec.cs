@@ -3,6 +3,7 @@
 namespace DailyMath.Core.Rendering;
 
 using DailyMath.Core.Layout;
+using System.Globalization;
 
 /// <summary>
 /// Defines the complete specification for a font configuration.
@@ -87,15 +88,71 @@ public readonly struct FontSpec : IEquatable<FontSpec>
     }
 
     /// <summary>
-    /// Returns a string describing the font (e.g., "Arial 12pt Bold").
+    /// Returns a string describing the font.
     /// </summary>
-    public override string ToString()
+    /// <param name="sizeFormat">The numeric format string for the size (e.g., "0.##", "F1").</param>
+    /// <param name="styleSeparator">The separator for multiple style flags (default is " | ").</param>
+    /// <param name="includeTypeName">If true, prefixes the result with "FontSpec: ".</param>
+    /// <returns>A string representation of the font specification.</returns>
+    public string ToString(string sizeFormat, string styleSeparator = " | ", bool includeTypeName = false)
     {
-        var desc = $"{Family}, {SizeInPoints}pt";
-        if (Weight != FontWeight.Normal) desc += $" {Weight}";
-        if (Style != FontStyle.None) desc += $" {Style}";
-        return desc;
+        var desc = $"{Family}, {SizeInPoints.ToString(sizeFormat, CultureInfo.InvariantCulture)}pt, {WeightToString()}, {StyleToString(styleSeparator)}";
+        return includeTypeName ? $"FontSpec: {desc}" : desc;
     }
+
+    /// <summary>
+    /// Converts the weight to a string, validating it is a defined enum value.
+    /// </summary>
+    private string WeightToString()
+    {
+        if (!Enum.IsDefined(typeof(FontWeight), Weight))
+            throw new InvalidOperationException($"Invalid FontWeight value: {Weight}");
+        return Weight.ToString();
+    }
+
+    /// <summary>
+    /// Converts the style flags to a string with the specified separator, validating all flags are defined.
+    /// Handles single flags directly for efficiency, and extracts combined flags manually to ensure validation.
+    /// </summary>
+    private string StyleToString(string separator)
+    {
+        // Handle common single flags directly for performance
+        switch (Style)
+        {
+            case FontStyle.None:
+            case FontStyle.Italic:
+            case FontStyle.Underline:
+            case FontStyle.Strikethrough:
+            case FontStyle.Overline:
+                return Style.ToString();
+            default:
+                break;
+        }
+
+        // For combinations, manually extract and validate flags
+        var styleCopy = Style;
+        var matchingValues = new List<string>();
+        var values = Enum.GetValues<FontStyle>();
+        foreach (var value in values)
+        {
+            if (value != FontStyle.None && (styleCopy & value) == value)
+            {
+                matchingValues.Add(value.ToString());
+                styleCopy &= ~value; // Remove the matched bit to track what's left
+            }
+        }
+
+        // If any bits remain unmatched, the enum has undefined values
+        if (styleCopy != FontStyle.None)
+            throw new InvalidOperationException($"FontStyle has undefined bits: {Style}");
+
+        return string.Join(separator, matchingValues);
+    }
+
+    /// <summary>
+    /// Returns a string describing the font (e.g., "Arial, 12pt, Normal, None").
+    /// </summary>
+    public override string ToString() => ToString("0.##", " | ", false);
 
     public bool Equals(FontSpec other)
     {
