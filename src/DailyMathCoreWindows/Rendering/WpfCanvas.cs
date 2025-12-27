@@ -251,12 +251,14 @@ public sealed class WpfCanvas : ICanvas<WpfCanvas>
         options ??= ExportOptions.Default;
         BitmapEncoder encoder = format switch
         {
+            ExportFormat.Pdf => throw new NotSupportedException("PDF format is not supported by WpfCanvas implementation. Consider using SkiaCanvas for PDF support."),
             ExportFormat.Png => new PngBitmapEncoder(),
             ExportFormat.Jpeg => new JpegBitmapEncoder(),
-            ExportFormat.Bmp => new BmpBitmapEncoder(),
             ExportFormat.Gif => new GifBitmapEncoder(),
+            ExportFormat.Bmp => new BmpBitmapEncoder(),
+            ExportFormat.Webp => throw new NotSupportedException("WebP format is not supported by WpfCanvas implementation. Consider using SkiaCanvas for WebP support."),
+            ExportFormat.Heif => throw new NotSupportedException("HEIF format is not supported by WpfCanvas implementation. Consider using SkiaCanvas for HEIF support."),
             ExportFormat.Tiff => new TiffBitmapEncoder(),
-            ExportFormat.Pdf => throw new NotSupportedException("PDF format is not supported by WpfCanvas implementation. Consider using SkiaCanvas for PDF support."),
             _ => throw new NotSupportedException($"Format {format} is not supported by WpfCanvas implementation.")
         };
 

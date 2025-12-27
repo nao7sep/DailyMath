@@ -292,14 +292,13 @@ public sealed class SkiaCanvas : ICanvas<SkiaCanvas>
     {
         return format switch
         {
+            ExportFormat.Pdf => SKEncodedImageFormat.Pdf,
             ExportFormat.Png => SKEncodedImageFormat.Png,
             ExportFormat.Jpeg => SKEncodedImageFormat.Jpeg,
-            ExportFormat.Webp => SKEncodedImageFormat.Webp,
             ExportFormat.Gif => SKEncodedImageFormat.Gif,
             ExportFormat.Bmp => SKEncodedImageFormat.Bmp,
-            ExportFormat.Ico => SKEncodedImageFormat.Ico,
+            ExportFormat.Webp => SKEncodedImageFormat.Webp,
             ExportFormat.Heif => SKEncodedImageFormat.Heif,
-            ExportFormat.Pdf => SKEncodedImageFormat.Pdf,
             _ => throw new NotSupportedException($"Format {format} is not supported by SkiaCanvas implementation.")
         };
     }
