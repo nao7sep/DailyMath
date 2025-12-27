@@ -276,71 +276,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
             throw new InvalidOperationException($"Failed to decode image: {result}");
         }
 
-        var origin = codec.EncodedOrigin;
-        if (origin != SKEncodedOrigin.TopLeft)
-        {
-            var rotated = ApplyOrientation(bitmap, origin);
-            bitmap.Dispose();
-            bitmap = rotated;
-        }
-
         return new SkiaImage(bitmap);
-    }
-
-    private static SKBitmap ApplyOrientation(SKBitmap bitmap, SKEncodedOrigin origin)
-    {
-        int width = bitmap.Width;
-        int height = bitmap.Height;
-
-        bool swapDimensions = origin == SKEncodedOrigin.LeftTop || origin == SKEncodedOrigin.RightTop ||
-                              origin == SKEncodedOrigin.RightBottom || origin == SKEncodedOrigin.LeftBottom;
-
-        var newInfo = new SKImageInfo(swapDimensions ? height : width, swapDimensions ? width : height, bitmap.ColorType, bitmap.AlphaType);
-        var rotated = new SKBitmap(newInfo);
-
-        using var canvas = new SKCanvas(rotated);
-        canvas.ResetMatrix();
-
-        switch (origin)
-        {
-            case SKEncodedOrigin.TopLeft:
-                break;
-            case SKEncodedOrigin.TopRight:
-                canvas.Translate(width, 0);
-                canvas.Scale(-1, 1);
-                break;
-            case SKEncodedOrigin.BottomRight:
-                canvas.Translate(width, height);
-                canvas.RotateDegrees(180);
-                break;
-            case SKEncodedOrigin.BottomLeft:
-                canvas.Translate(0, height);
-                canvas.Scale(1, -1);
-                break;
-            case SKEncodedOrigin.LeftTop:
-                canvas.Translate(height, 0);
-                canvas.RotateDegrees(90);
-                canvas.Translate(0, width);
-                canvas.Scale(1, -1);
-                break;
-            case SKEncodedOrigin.RightTop:
-                canvas.Translate(height, 0);
-                canvas.RotateDegrees(90);
-                break;
-            case SKEncodedOrigin.RightBottom:
-                canvas.Translate(0, width);
-                canvas.RotateDegrees(270);
-                canvas.Translate(height, 0);
-                canvas.Scale(-1, 1);
-                break;
-            case SKEncodedOrigin.LeftBottom:
-                canvas.Translate(0, width);
-                canvas.RotateDegrees(270);
-                break;
-        }
-
-        canvas.DrawBitmap(bitmap, 0, 0);
-        return rotated;
     }
 
     private int GetExpectedPixelBufferSize() => Width * Height * 4;

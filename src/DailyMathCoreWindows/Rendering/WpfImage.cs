@@ -312,39 +312,12 @@ public sealed class WpfImage : IImage<WpfImage>
 
         BitmapSource source = frame;
 
-        if (frame.Metadata is BitmapMetadata metadata && metadata.ContainsQuery("System.Photo.Orientation"))
-        {
-            var orientation = metadata.GetQuery("System.Photo.Orientation");
-            if (orientation != null)
-            {
-                source = ApplyOrientation(source, (ushort)orientation);
-            }
-        }
-
         if (source.Format != PixelFormats.Bgra32)
         {
             source = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
         }
 
         return new WpfImage(new WriteableBitmap(source));
-    }
-
-    private static BitmapSource ApplyOrientation(BitmapSource source, ushort orientation)
-    {
-        Transform? transform = orientation switch
-        {
-            2 => new ScaleTransform(-1, 1),
-            3 => new RotateTransform(180),
-            4 => new ScaleTransform(1, -1),
-            5 => new TransformGroup { Children = { new ScaleTransform(-1, 1), new RotateTransform(270) } },
-            6 => new RotateTransform(90),
-            7 => new TransformGroup { Children = { new ScaleTransform(-1, 1), new RotateTransform(90) } },
-            8 => new RotateTransform(270),
-            _ => null
-        };
-
-        if (transform == null) return source;
-        return new TransformedBitmap(source, transform);
     }
 
     private void CheckBounds(int x, int y)
