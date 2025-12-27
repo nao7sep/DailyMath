@@ -226,7 +226,7 @@ public readonly struct Color : IEquatable<Color>
     /// Note: Prefixed strings like "Color: #RRGGBB" are not supported; only plain hex strings starting with '#' are parsed.
     /// </summary>
     /// <param name="hexString">Hex span beginning with '#'. Case-insensitive.</param>
-    /// <param name="color">The parsed color if successful; otherwise <see cref="Color.Transparent"/>.</param>
+    /// <param name="color">The parsed color if successful; otherwise the default, which is transparent.</param>
     /// <param name="format">Component order to expect when parsing.</param>
     /// <param name="defaultAlpha">Optional default alpha (0-255) to use when not present in the span.</param>
     /// <returns>True if parsing succeeded; false if the span is invalid or unsupported.</returns>
@@ -239,7 +239,7 @@ public readonly struct Color : IEquatable<Color>
         }
         catch
         {
-            color = Transparent;
+            color = default;
             return false;
         }
     }
