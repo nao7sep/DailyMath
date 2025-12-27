@@ -5,15 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <!-- Explicitly set to use dotted namespace while keeping folder name dot-free -->
-    <RootNamespace>DailyMath.Core.Windows</RootNamespace>
+    <RootNamespace>DailyMath.Core.Wpf</RootNamespace>
 
     <!-- Assembly Information -->
-    <AssemblyTitle>DailyMath Core Windows</AssemblyTitle>
+    <AssemblyTitle>DailyMath Core WPF</AssemblyTitle>
     <Product>DailyMath</Product>
-    <Description>Windows-specific rendering and printing implementation for DailyMath Core</Description>
+    <Description>WPF rendering and printing implementation for DailyMath Core</Description>
 
     <!-- Version Information - Keep these three in sync with DailyMath.csproj -->
     <Version>0.1.0</Version>

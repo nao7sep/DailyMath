@@ -15,11 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreTests", "tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreSkia", "src\DailyMathCoreSkia\DailyMathCoreSkia.csproj", "{85C35438-6834-4AB6-8E9E-B9AAA4C9AAB7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreWindows", "src\DailyMathCoreWindows\DailyMathCoreWindows.csproj", "{1C69E137-DC5A-4F8F-824C-843C0A274101}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreWpf", "src\DailyMathCoreWpf\DailyMathCoreWpf.csproj", "{1C69E137-DC5A-4F8F-824C-843C0A274101}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreSkiaTests", "tests\DailyMathCoreSkiaTests\DailyMathCoreSkiaTests.csproj", "{AC4D3CF3-3BC6-4F24-B6A8-8CCA025EEDDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreWindowsTests", "tests\DailyMathCoreWindowsTests\DailyMathCoreWindowsTests.csproj", "{8F762271-3E74-48E0-A04C-88E81344E1C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyMathCoreWpfTests", "tests\DailyMathCoreWpfTests\DailyMathCoreWpfTests.csproj", "{8F762271-3E74-48E0-A04C-88E81344E1C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
