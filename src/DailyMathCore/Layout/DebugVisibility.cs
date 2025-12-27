@@ -4,24 +4,20 @@
 /// Specifies when debug visualization (borders and labels) should be rendered for an element.
 /// </summary>
 /// <remarks>
-/// <para><b>Typical Development Workflow:</b></para>
-/// <para>
+/// Typical Development Workflow:
+///
 /// 1. Start with <see cref="IfRequested"/> (default) - set a border color or label and enable
 ///    debug rendering globally to verify the element is positioned and sized correctly.
-/// </para>
-/// <para>
+///
 /// 2. Once verified, change to <see cref="Never"/> if you're confident the element is correct
 ///    and won't need further debugging. This keeps debug rendering fast even when enabled globally.
-/// </para>
-/// <para>
+///
 /// 3. Use <see cref="Always"/> for elements that are still being adjusted or have uncertain
 ///    positioning/sizing. These will show even if global debug rendering is off, making them
 ///    easy to track while iterating on the layout.
-/// </para>
-/// <para>
+///
 /// 4. Final cleanup: Comment out the debug rendering method call entirely. This is a single
 ///    line change and removes all debug overhead.
-/// </para>
 /// </remarks>
 public enum DebugVisibility
 {

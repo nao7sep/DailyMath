@@ -8,13 +8,11 @@ using System;
 /// Represents a 2D coordinate in absolute rendering space (pixels).
 /// Immutable struct used for final drawing operations.
 ///
-/// <para>
-/// <strong>Design Note on Units:</strong><br/>
+/// Design Note on Units:
 /// While layout definition types (like <see cref="Length"/> and <see cref="Measure"/>) are dynamic
 /// and support multiple units (Inches, Percent, etc.), <see cref="Point"/> and <see cref="Region"/>
-/// represent the <em>result</em> of layout calculations. Therefore, they strictly use <see cref="double"/>
+/// represent the result of layout calculations. Therefore, they strictly use <see cref="double"/>
 /// representing raw pixels.
-/// </para>
 /// </summary>
 public readonly struct Point : IEquatable<Point>
 {
