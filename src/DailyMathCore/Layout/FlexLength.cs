@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
@@ -7,17 +8,28 @@ namespace DailyMathCore.Layout;
 /// Supports DPI-aware and context-aware conversions.
 /// 
 /// Terminology:
-/// Container: The parent element's Size minus its Padding. Defines the available area for child placement.
-/// Size: The dimensions of an element, including Padding but excluding Margin.
+/// Base Size: The basis for resolving relative units (Percentage). 
+/// When resolving Margin or Element Size, the Base Size is the Container (Parent Size - Parent Padding).
+/// When resolving an element's own Padding, the Base Size is the element's own Size.
 /// </summary>
 public readonly struct FlexLength : IEquatable<FlexLength>
 {
+    /// <summary>
+    /// A shared instance representing a zero length in pixels.
+    /// </summary>
     public static readonly FlexLength Zero = new FlexLength(0, Unit.Pixels);
 
     private const double MillimetersPerInch = 25.4;
     private const double CentimetersPerInch = 2.54;
 
+    /// <summary>
+    /// The numeric value of the length.
+    /// </summary>
     public double Value { get; }
+
+    /// <summary>
+    /// The unit of measurement.
+    /// </summary>
     public Unit Unit { get; }
 
     public FlexLength(double value, Unit unit)
@@ -99,7 +111,7 @@ public readonly struct FlexLength : IEquatable<FlexLength>
         if (Unit == Unit.Percentage) return Value;
 
         double bs = ValidateBaseSize(baseSize);
-        if (bs == 0) throw new InvalidOperationException("Cannot convert a non-zero length to a percentage of zero.");
+        if (bs == 0) throw new InvalidOperationException("Cannot convert a non-zero length to a percentage of a zero-length base.");
 
         return Unit switch
         {
@@ -159,7 +171,7 @@ public readonly struct FlexLength : IEquatable<FlexLength>
 
     public override int GetHashCode()
     {
-        if (Value == 0) return 0.0.GetHashCode();
+        if (Value == 0) return 0; // Use a constant for all zero-value variants
         return HashCode.Combine(Value, Unit);
     }
 
@@ -169,7 +181,7 @@ public readonly struct FlexLength : IEquatable<FlexLength>
     {
         string fmt = format ?? LayoutConstants.DefaultNumericFormat;
         string unitStr = LayoutEnumConverter.ToShortString(Unit);
-        return $"{Value.ToString(fmt, System.Globalization.CultureInfo.InvariantCulture)}{unitStr}";
+        return $"{Value.ToString(fmt, CultureInfo.InvariantCulture)}{unitStr}";
     }
 
     #endregion
@@ -185,7 +197,7 @@ public readonly struct FlexLength : IEquatable<FlexLength>
 
     private static double ValidateBaseSize(double? baseSize)
     {
-        return baseSize ?? throw new InvalidOperationException("Base size context is required for this conversion.");
+        return baseSize ?? throw new InvalidOperationException("Base size context is required for relative resolution (e.g. Percentage).");
     }
 
     private static bool AreAgnosticCompatible(Unit u1, Unit u2)

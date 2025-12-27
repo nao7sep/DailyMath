@@ -13,6 +13,8 @@ public class FlexPage : FlexElement
         get => _dpi;
         set
         {
+            if (value.HasValue && value.Value <= 0)
+                throw new ArgumentException("DPI must be a positive non-zero value.", nameof(value));
             _dpi = value;
             InvalidateLayout();
         }
@@ -27,10 +29,10 @@ public class FlexPage : FlexElement
 
     public new string ToString(string? format)
     {
-        string dpiStr = Dpi.HasValue 
+        string dpiStr = Dpi.HasValue
             ? $"{Dpi.Value.ToString(format ?? LayoutConstants.DefaultNumericFormat, System.Globalization.CultureInfo.InvariantCulture)}dpi"
             : $"D:{LayoutConstants.NullValueLiteral}";
-        
+
         return $"{dpiStr}, {base.ToString(format)}";
     }
 }

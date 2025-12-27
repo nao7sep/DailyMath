@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
@@ -78,8 +79,18 @@ public class FlexElement
 
     public void AddChild(FlexElement child)
     {
+        if (child == this)
+            throw new InvalidOperationException("An element cannot be its own child.");
+        
         if (child.Parent != null && child.Parent != this)
             throw new InvalidOperationException("Element already belongs to another parent.");
+
+        // Circularity check
+        for (FlexElement? current = this; current != null; current = current.Parent)
+        {
+            if (current == child)
+                throw new InvalidOperationException("Cannot add child: Circular hierarchy detected.");
+        }
         
         child.Parent = this;
         if (!Children.Contains(child))
@@ -114,7 +125,7 @@ public class FlexElement
                 throw new InvalidOperationException("Root element cannot have a Margin.");
 
             if (Width == null || Height == null)
-                throw new InvalidOperationException("Root element must have Width and Height specified.");
+                throw new InvalidOperationException("Root element must have explicit Width and Height specified.");
 
             double w = Width.Value.ToPixels(dpi, null);
             double h = Height.Value.ToPixels(dpi, null);
@@ -136,7 +147,7 @@ public class FlexElement
             double cw = pPx.Size.Width - pPx.Padding.Left - pPx.Padding.Right;
             double ch = pPx.Size.Height - pPx.Padding.Top - pPx.Padding.Bottom;
 
-            if (cw < 0 || ch < 0)
+            if (cw < -LayoutConstants.Epsilon || ch < -LayoutConstants.Epsilon)
             {
                 throw new InvalidOperationException($"Container size cannot be negative. Parent Size ({FormatPx(pPx.Size.Width)}x{FormatPx(pPx.Size.Height)}) is smaller than its Padding ({FormatPx(pPx.Padding.Left + pPx.Padding.Right)}x{FormatPx(pPx.Padding.Top + pPx.Padding.Bottom)}).");
             }
@@ -176,13 +187,13 @@ public class FlexElement
         double ms = requestedMarginStart.ToPixels(dpi, containerSize);
         double me = requestedMarginEnd.ToPixels(dpi, containerSize);
 
-        if (ms < 0 || me < 0)
+        if (ms < -LayoutConstants.Epsilon || me < -LayoutConstants.Epsilon)
             throw new InvalidOperationException("Negative margins are not supported.");
 
         if (requestedSize == null) // "Fill" logic
         {
             double s = containerSize - ms - me;
-            if (s < 0)
+            if (s < -LayoutConstants.Epsilon)
             {
                 throw new InvalidOperationException($"Layout overflow: Margins ({FormatPx(ms + me)}px) exceed Container Size ({FormatPx(containerSize)}px) for filling element.");
             }
@@ -190,11 +201,11 @@ public class FlexElement
         }
 
         double size = requestedSize.Value.ToPixels(dpi, containerSize);
-        if (size < 0)
+        if (size < -LayoutConstants.Epsilon)
             throw new InvalidOperationException("Element dimensions cannot be negative.");
 
         // Boundary check
-        if (ms + size + me > containerSize + 0.000001)
+        if (ms + size + me > containerSize + LayoutConstants.Epsilon)
         {
             throw new InvalidOperationException($"Layout overflow: Total size ({FormatPx(ms + size + me)}px) exceeds Container Size ({FormatPx(containerSize)}px).");
         }
@@ -215,7 +226,7 @@ public class FlexElement
         return (centeredMargin, size, centeredMargin, centeredMargin);
     }
 
-    private static string FormatPx(double value) => value.ToString(LayoutConstants.DefaultNumericFormat, System.Globalization.CultureInfo.InvariantCulture);
+    private static string FormatPx(double value) => value.ToString(LayoutConstants.DefaultNumericFormat, CultureInfo.InvariantCulture);
 
     public (double MarginLeft, double MarginTop, double MarginRight, double MarginBottom,
             double X, double Y,

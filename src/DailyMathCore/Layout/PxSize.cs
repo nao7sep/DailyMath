@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
@@ -8,6 +9,9 @@ namespace DailyMathCore.Layout;
 /// </summary>
 public readonly struct PxSize : IEquatable<PxSize>
 {
+    /// <summary>
+    /// A shared instance representing a zero size.
+    /// </summary>
     public static readonly PxSize Zero = new PxSize(0, 0);
 
     public double Width { get; }
@@ -36,7 +40,7 @@ public readonly struct PxSize : IEquatable<PxSize>
     public string ToString(string? format)
     {
         string fmt = format ?? LayoutConstants.DefaultNumericFormat;
-        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        var culture = CultureInfo.InvariantCulture;
         return $"{{W:{Width.ToString(fmt, culture)}, H:{Height.ToString(fmt, culture)}}}";
     }
 }

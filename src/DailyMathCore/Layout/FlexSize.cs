@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
@@ -31,6 +32,9 @@ public readonly struct FlexSize : IEquatable<FlexSize>
         return new PxSize(Width.ToPixels(dpi, baseWidth), Height.ToPixels(dpi, baseHeight));
     }
 
+    /// <summary>
+    /// Provided for API consistency. Returns the resolved dimensions as a tuple.
+    /// </summary>
     public (double Width, double Height) ToPixels(double? dpi, double? baseWidth, double? baseHeight)
     {
         var px = ToPxSize(dpi, baseWidth, baseHeight);

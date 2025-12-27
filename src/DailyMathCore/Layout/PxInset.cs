@@ -1,7 +1,11 @@
 using System;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
+/// <summary>
+/// Represents insets in pixels (Margin or Padding).
+/// </summary>
 public readonly struct PxInset : IEquatable<PxInset>
 {
     public static readonly PxInset Zero = new PxInset(0);
@@ -47,7 +51,6 @@ public readonly struct PxInset : IEquatable<PxInset>
     public string ToString(string? format)
     {
         string fmt = format ?? LayoutConstants.DefaultNumericFormat;
-        var culture = System.Globalization.CultureInfo.InvariantCulture;
-        return $"{{L:{Left.ToString(fmt, culture)}, T:{Top.ToString(fmt, culture)}, R:{Right.ToString(fmt, culture)}, B:{Bottom.ToString(fmt, culture)}}}";
+        return $"{{L:{Left.ToString(fmt, CultureInfo.InvariantCulture)}, T:{Top.ToString(fmt, CultureInfo.InvariantCulture)}, R:{Right.ToString(fmt, CultureInfo.InvariantCulture)}, B:{Bottom.ToString(fmt, CultureInfo.InvariantCulture)}}}";
     }
 }

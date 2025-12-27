@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
@@ -31,6 +32,9 @@ public readonly struct FlexPoint : IEquatable<FlexPoint>
         return new PxPoint(X.ToPixels(dpi, baseWidth), Y.ToPixels(dpi, baseHeight));
     }
 
+    /// <summary>
+    /// Provided for API consistency. Returns the resolved coordinates as a tuple.
+    /// </summary>
     public (double X, double Y) ToPixels(double? dpi, double? baseWidth, double? baseHeight)
     {
         var px = ToPxPoint(dpi, baseWidth, baseHeight);

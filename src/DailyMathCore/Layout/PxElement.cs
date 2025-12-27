@@ -1,9 +1,10 @@
 using System;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
 /// <summary>
-/// Represents the resolved, pixel-based values of an Element, including its definitive position and size.
+/// Represents the resolved, pixel-based values of a FlexElement, including its definitive position and size.
 /// </summary>
 public readonly struct PxElement : IEquatable<PxElement>
 {
@@ -40,7 +41,7 @@ public readonly struct PxElement : IEquatable<PxElement>
     public string ToString(string? format)
     {
         string fmt = format ?? LayoutConstants.DefaultNumericFormat;
-        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        var culture = CultureInfo.InvariantCulture;
         return $"ML:{Margin.Left.ToString(fmt, culture)}, MT:{Margin.Top.ToString(fmt, culture)}, MR:{Margin.Right.ToString(fmt, culture)}, MB:{Margin.Bottom.ToString(fmt, culture)}, " +
                $"X:{Position.X.ToString(fmt, culture)}, Y:{Position.Y.ToString(fmt, culture)}, " +
                $"W:{Size.Width.ToString(fmt, culture)}, H:{Size.Height.ToString(fmt, culture)}, " +

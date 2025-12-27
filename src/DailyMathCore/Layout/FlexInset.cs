@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
@@ -51,6 +52,9 @@ public readonly struct FlexInset : IEquatable<FlexInset>
         );
     }
 
+    /// <summary>
+    /// Provided for API consistency. Returns the resolved insets as a tuple.
+    /// </summary>
     public (double Left, double Top, double Right, double Bottom) ToPixels(double? dpi, double? baseWidth, double? baseHeight)
     {
         var px = ToPxInset(dpi, baseWidth, baseHeight);

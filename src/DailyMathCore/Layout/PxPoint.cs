@@ -1,7 +1,11 @@
 using System;
+using System.Globalization;
 
 namespace DailyMathCore.Layout;
 
+/// <summary>
+/// Represents a point in pixels.
+/// </summary>
 public readonly struct PxPoint : IEquatable<PxPoint>
 {
     public static readonly PxPoint Zero = new PxPoint(0, 0);
@@ -32,7 +36,6 @@ public readonly struct PxPoint : IEquatable<PxPoint>
     public string ToString(string? format)
     {
         string fmt = format ?? LayoutConstants.DefaultNumericFormat;
-        var culture = System.Globalization.CultureInfo.InvariantCulture;
-        return $"{{X:{X.ToString(fmt, culture)}, Y:{Y.ToString(fmt, culture)}}}";
+        return $"{{X:{X.ToString(fmt, CultureInfo.InvariantCulture)}, Y:{Y.ToString(fmt, CultureInfo.InvariantCulture)}}}";
     }
 }
