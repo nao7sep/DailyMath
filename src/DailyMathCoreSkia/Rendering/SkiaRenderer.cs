@@ -63,7 +63,7 @@ public sealed class SkiaRenderer : IRenderer
         DrawRectangle(region, borderColor, fillColor, borderThickness);
     }
 
-    public void DrawImage(Element target, IImage image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit)
+    public void DrawImage(Element target, ICanvas image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit)
     {
         var region = target.GetAbsoluteRegion();
         var contentRegion = LayoutCalculator.ApplyPadding(region, target.Padding, target.GetEffectiveDpi());
@@ -162,16 +162,16 @@ public sealed class SkiaRenderer : IRenderer
         _canvas.DrawLine((float)start.X, (float)start.Y, (float)end.X, (float)end.Y, _paint);
     }
 
-    public void DrawImage(Region region, IImage image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit)
+    public void DrawImage(Region region, ICanvas image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit)
     {
         if (image == null) return;
 
         SKBitmap? tempBitmap = null;
         SKBitmap sourceBitmap;
 
-        if (image is SkiaImage skiaImage)
+        if (image is SkiaCanvas skiaCanvas)
         {
-            sourceBitmap = skiaImage.Bitmap;
+            sourceBitmap = skiaCanvas.Bitmap;
         }
         else
         {

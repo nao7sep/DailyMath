@@ -9,11 +9,11 @@ using DailyMath.Core.Layout;
 namespace DailyMath.Core.Skia;
 
 /// <summary>
-/// SkiaSharp implementation of a mutable raster image.
+/// SkiaSharp implementation of a mutable drawable canvas.
 /// Wraps an SKBitmap for pixel manipulation and storage.
-/// Implements IDisposable via IImage interface - ensure to Dispose() to release unmanaged Skia resources.
+/// Implements IDisposable via ICanvas interface - ensure to Dispose() to release unmanaged Skia resources.
 /// </summary>
-public sealed class SkiaImage : IImage<SkiaImage>
+public sealed class SkiaCanvas : ICanvas<SkiaCanvas>
 {
     private SKBitmap _bitmap;
     private bool _disposed;
@@ -36,37 +36,37 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
     // --- Constructor ---
 
-    private SkiaImage(SKBitmap bitmap)
+    private SkiaCanvas(SKBitmap bitmap)
     {
         _bitmap = bitmap ?? throw new ArgumentNullException(nameof(bitmap));
     }
 
     // --- Factory Methods ---
 
-    public static SkiaImage Create(int width, int height)
+    public static SkiaCanvas Create(int width, int height)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentException("Dimensions must be positive.");
 
         var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
         var bitmap = new SKBitmap(info);
-        return new SkiaImage(bitmap);
+        return new SkiaCanvas(bitmap);
     }
 
-    public static SkiaImage Load(string path)
+    public static SkiaCanvas Load(string path)
     {
         if (!File.Exists(path))
-            throw new FileNotFoundException("Image file not found.", path);
+            throw new FileNotFoundException("Canvas file not found.", path);
 
         using var stream = File.OpenRead(path);
         using var codec = SKCodec.Create(stream);
         return LoadFromCodec(codec);
     }
 
-    public static async Task<SkiaImage> LoadAsync(string path, CancellationToken cancellationToken = default)
+    public static async Task<SkiaCanvas> LoadAsync(string path, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(path))
-            throw new FileNotFoundException("Image file not found.", path);
+            throw new FileNotFoundException("Canvas file not found.", path);
 
         return await Task.Run(() =>
         {
@@ -76,7 +76,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
         }, cancellationToken);
     }
 
-    public static SkiaImage Load(ReadOnlySpan<byte> data)
+    public static SkiaCanvas Load(ReadOnlySpan<byte> data)
     {
         // Use unsafe to pin span memory for interop with SkiaSharp's unmanaged SKData API.
         // The fixed block ensures the GC won't move the data during the SKData.CreateCopy call.
@@ -91,7 +91,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
         }
     }
 
-    public static async Task<SkiaImage> LoadAsync(Stream stream, CancellationToken cancellationToken = default)
+    public static async Task<SkiaCanvas> LoadAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         if (stream.CanSeek)
         {
@@ -205,17 +205,17 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
     // --- I/O ---
 
-    public byte[] Encode(ImageFormat format, ImageEncodeOptions? options = null)
+    public byte[] Encode(ExportFormat format, ExportOptions? options = null)
     {
         using var memoryStream = new MemoryStream();
         Encode(memoryStream, format, options);
         return memoryStream.ToArray();
     }
 
-    public void Encode(Stream stream, ImageFormat format, ImageEncodeOptions? options = null)
+    public void Encode(Stream stream, ExportFormat format, ExportOptions? options = null)
     {
         ThrowIfDisposed();
-        options ??= ImageEncodeOptions.Default;
+        options ??= ExportOptions.Default;
         var skFormat = MapFormat(format);
         int qualityValue = options.JpegQuality;
 
@@ -224,24 +224,24 @@ public sealed class SkiaImage : IImage<SkiaImage>
         data.SaveTo(stream);
     }
 
-    public async Task<byte[]> EncodeAsync(ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task<byte[]> EncodeAsync(ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
         return await Task.Run(() => Encode(format, options), cancellationToken);
     }
 
-    public async Task EncodeAsync(Stream stream, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task EncodeAsync(Stream stream, ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
         await Task.Run(() => Encode(stream, format, options), cancellationToken);
     }
 
-    public void Save(string path, ImageFormat format, ImageEncodeOptions? options = null)
+    public void Save(string path, ExportFormat format, ExportOptions? options = null)
     {
         ThrowIfDisposed();
         using var stream = File.OpenWrite(path);
         Encode(stream, format, options);
     }
 
-    public async Task SaveAsync(string path, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task SaveAsync(string path, ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
         using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
@@ -261,7 +261,7 @@ public sealed class SkiaImage : IImage<SkiaImage>
 
     // --- Helpers ---
 
-    private static SkiaImage LoadFromCodec(SKCodec codec)
+    private static SkiaCanvas LoadFromCodec(SKCodec codec)
     {
         if (codec == null)
             throw new InvalidOperationException("Failed to create codec from input.");
@@ -273,10 +273,10 @@ public sealed class SkiaImage : IImage<SkiaImage>
         if (result != SKCodecResult.Success)
         {
             bitmap.Dispose();
-            throw new InvalidOperationException($"Failed to decode image: {result}");
+            throw new InvalidOperationException($"Failed to decode canvas: {result}");
         }
 
-        return new SkiaImage(bitmap);
+        return new SkiaCanvas(bitmap);
     }
 
     private int GetExpectedPixelBufferSize() => Width * Height * 4;
@@ -288,24 +288,25 @@ public sealed class SkiaImage : IImage<SkiaImage>
             throw new ArgumentException($"Buffer is too small. Expected {expectedSize} bytes.", paramName);
     }
 
-    private static SKEncodedImageFormat MapFormat(ImageFormat format)
+    private static SKEncodedImageFormat MapFormat(ExportFormat format)
     {
         return format switch
         {
-            ImageFormat.Png => SKEncodedImageFormat.Png,
-            ImageFormat.Jpeg => SKEncodedImageFormat.Jpeg,
-            ImageFormat.Webp => SKEncodedImageFormat.Webp,
-            ImageFormat.Gif => SKEncodedImageFormat.Gif,
-            ImageFormat.Bmp => SKEncodedImageFormat.Bmp,
-            ImageFormat.Ico => SKEncodedImageFormat.Ico,
-            ImageFormat.Heif => SKEncodedImageFormat.Heif,
-            _ => throw new NotSupportedException($"Format {format} is not supported by SkiaImage implementation.")
+            ExportFormat.Png => SKEncodedImageFormat.Png,
+            ExportFormat.Jpeg => SKEncodedImageFormat.Jpeg,
+            ExportFormat.Webp => SKEncodedImageFormat.Webp,
+            ExportFormat.Gif => SKEncodedImageFormat.Gif,
+            ExportFormat.Bmp => SKEncodedImageFormat.Bmp,
+            ExportFormat.Ico => SKEncodedImageFormat.Ico,
+            ExportFormat.Heif => SKEncodedImageFormat.Heif,
+            ExportFormat.Pdf => SKEncodedImageFormat.Pdf,
+            _ => throw new NotSupportedException($"Format {format} is not supported by SkiaCanvas implementation.")
         };
     }
 
     private void ThrowIfDisposed()
     {
         if (_disposed)
-            throw new ObjectDisposedException(nameof(SkiaImage));
+            throw new ObjectDisposedException(nameof(SkiaCanvas));
     }
 }

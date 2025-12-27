@@ -45,9 +45,9 @@ public interface IRenderer : IDisposable
     void DrawRectangle(Element target, Color? borderColor, Color? fillColor, double borderThickness = 1.0);
 
     /// <summary>
-    /// Draws an image within the target element's content area.
+    /// Draws a canvas within the target element's content area.
     /// </summary>
-    void DrawImage(Element target, IImage image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit);
+    void DrawImage(Element target, ICanvas image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit);
 
     // --- Region-Based Drawing (Low Level) ---
 
@@ -91,7 +91,7 @@ public interface IRenderer : IDisposable
     void DrawLine(Point start, Point end, Color color, double thickness = 1.0);
 
     /// <summary>
-    /// Draws an image within an absolute region.
+    /// Draws a canvas within an absolute region.
     /// </summary>
-    void DrawImage(Region region, IImage image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit);
+    void DrawImage(Region region, ICanvas image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit);
 }

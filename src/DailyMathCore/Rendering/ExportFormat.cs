@@ -1,9 +1,9 @@
 namespace DailyMath.Core.Rendering;
 
 /// <summary>
-/// Specifies the file format for image encoding and decoding.
+/// Specifies the file format for canvas export and serialization.
 /// </summary>
-public enum ImageFormat
+public enum ExportFormat
 {
     /// <summary>
     /// Portable Network Graphics (PNG).
@@ -62,6 +62,13 @@ public enum ImageFormat
     /// Large file sizes but extremely fast to read/write as no decoding is required.
     /// </summary>
     Bmp,
+
+    /// <summary>
+    /// Portable Document Format (PDF).
+    /// A vector-based document format supporting text, images, and graphics.
+    /// Ideal for archival, distribution, and printing with consistent appearance across devices.
+    /// </summary>
+    Pdf,
 
     /// <summary>
     /// Tagged Image File Format (TIFF).

@@ -13,10 +13,10 @@ using WpfColor = System.Windows.Media.Color;
 namespace DailyMath.Core.Windows;
 
 /// <summary>
-/// WPF implementation of a mutable raster image.
+/// WPF implementation of a mutable drawable canvas.
 /// Wraps a WriteableBitmap for pixel manipulation.
 /// </summary>
-public sealed class WpfImage : IImage<WpfImage>
+public sealed class WpfCanvas : ICanvas<WpfCanvas>
 {
     private WriteableBitmap _bitmap;
     private bool _disposed;
@@ -42,35 +42,35 @@ public sealed class WpfImage : IImage<WpfImage>
 
     // --- Constructor ---
 
-    private WpfImage(WriteableBitmap bitmap)
+    private WpfCanvas(WriteableBitmap bitmap)
     {
         _bitmap = bitmap ?? throw new ArgumentNullException(nameof(bitmap));
     }
 
     // --- Factory Methods ---
 
-    public static WpfImage Create(int width, int height)
+    public static WpfCanvas Create(int width, int height)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentException("Dimensions must be positive.");
 
         var bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
-        return new WpfImage(bitmap);
+        return new WpfCanvas(bitmap);
     }
 
-    public static WpfImage Load(string path)
+    public static WpfCanvas Load(string path)
     {
         if (!File.Exists(path))
-            throw new FileNotFoundException("Image file not found.", path);
+            throw new FileNotFoundException("Canvas file not found.", path);
 
         using var stream = File.OpenRead(path);
         return LoadFromStreamInternal(stream);
     }
 
-    public static async Task<WpfImage> LoadAsync(string path, CancellationToken cancellationToken = default)
+    public static async Task<WpfCanvas> LoadAsync(string path, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(path))
-            throw new FileNotFoundException("Image file not found.", path);
+            throw new FileNotFoundException("Canvas file not found.", path);
 
         byte[] data;
         using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true))
@@ -81,13 +81,13 @@ public sealed class WpfImage : IImage<WpfImage>
         return Load(data);
     }
 
-    public static WpfImage Load(ReadOnlySpan<byte> data)
+    public static WpfCanvas Load(ReadOnlySpan<byte> data)
     {
         using var stream = new MemoryStream(data.ToArray());
         return LoadFromStreamInternal(stream);
     }
 
-    public static async Task<WpfImage> LoadAsync(Stream stream, CancellationToken cancellationToken = default)
+    public static async Task<WpfCanvas> LoadAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream, cancellationToken);
@@ -238,25 +238,26 @@ public sealed class WpfImage : IImage<WpfImage>
 
     // --- I/O ---
 
-    public byte[] Encode(ImageFormat format, ImageEncodeOptions? options = null)
+    public byte[] Encode(ExportFormat format, ExportOptions? options = null)
     {
         using var memoryStream = new MemoryStream();
         Encode(memoryStream, format, options);
         return memoryStream.ToArray();
     }
 
-    public void Encode(Stream stream, ImageFormat format, ImageEncodeOptions? options = null)
+    public void Encode(Stream stream, ExportFormat format, ExportOptions? options = null)
     {
         ThrowIfDisposed();
-        options ??= ImageEncodeOptions.Default;
+        options ??= ExportOptions.Default;
         BitmapEncoder encoder = format switch
         {
-            ImageFormat.Png => new PngBitmapEncoder(),
-            ImageFormat.Jpeg => new JpegBitmapEncoder(),
-            ImageFormat.Bmp => new BmpBitmapEncoder(),
-            ImageFormat.Gif => new GifBitmapEncoder(),
-            ImageFormat.Tiff => new TiffBitmapEncoder(),
-            _ => throw new NotSupportedException($"Format {format} is not supported by WpfImage implementation.")
+            ExportFormat.Png => new PngBitmapEncoder(),
+            ExportFormat.Jpeg => new JpegBitmapEncoder(),
+            ExportFormat.Bmp => new BmpBitmapEncoder(),
+            ExportFormat.Gif => new GifBitmapEncoder(),
+            ExportFormat.Tiff => new TiffBitmapEncoder(),
+            ExportFormat.Pdf => throw new NotSupportedException("PDF format is not supported by WpfCanvas implementation. Consider using SkiaCanvas for PDF support."),
+            _ => throw new NotSupportedException($"Format {format} is not supported by WpfCanvas implementation.")
         };
 
         if (encoder is JpegBitmapEncoder jpegEncoder)
@@ -268,24 +269,24 @@ public sealed class WpfImage : IImage<WpfImage>
         encoder.Save(stream);
     }
 
-    public async Task<byte[]> EncodeAsync(ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task<byte[]> EncodeAsync(ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
         return await Task.Run(() => Encode(format, options), cancellationToken);
     }
 
-    public async Task EncodeAsync(Stream stream, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task EncodeAsync(Stream stream, ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
         await Task.Run(() => Encode(stream, format, options), cancellationToken);
     }
 
-    public void Save(string path, ImageFormat format, ImageEncodeOptions? options = null)
+    public void Save(string path, ExportFormat format, ExportOptions? options = null)
     {
         ThrowIfDisposed();
         using var stream = File.OpenWrite(path);
         Encode(stream, format, options);
     }
 
-    public async Task SaveAsync(string path, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task SaveAsync(string path, ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
         using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
@@ -305,7 +306,7 @@ public sealed class WpfImage : IImage<WpfImage>
 
     // --- Helpers ---
 
-    private static WpfImage LoadFromStreamInternal(Stream stream)
+    private static WpfCanvas LoadFromStreamInternal(Stream stream)
     {
         var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad);
         var frame = decoder.Frames[0];
@@ -317,7 +318,7 @@ public sealed class WpfImage : IImage<WpfImage>
             source = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
         }
 
-        return new WpfImage(new WriteableBitmap(source));
+        return new WpfCanvas(new WriteableBitmap(source));
     }
 
     private void CheckBounds(int x, int y)
@@ -338,6 +339,6 @@ public sealed class WpfImage : IImage<WpfImage>
     private void ThrowIfDisposed()
     {
         if (_disposed)
-            throw new ObjectDisposedException(nameof(WpfImage));
+            throw new ObjectDisposedException(nameof(WpfCanvas));
     }
 }

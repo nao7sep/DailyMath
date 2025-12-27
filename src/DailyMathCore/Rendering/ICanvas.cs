@@ -6,10 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 
 /// <summary>
-/// Represents a platform-agnostic, mutable raster image (grid of pixels).
-/// Provides methods for pixel-level manipulation and platform-specific I/O.
+/// Represents a platform-agnostic, mutable drawable surface (canvas).
+/// Provides methods for pixel-level manipulation and serialization to various formats (raster and document).
 /// </summary>
-public interface IImage : IDisposable
+public interface ICanvas : IDisposable
 {
     // --- Properties ---
 
@@ -95,62 +95,62 @@ public interface IImage : IDisposable
     // --- I/O ---
 
     /// <summary>
-    /// Encodes the image to a byte array.
+    /// Encodes the canvas to a byte array.
     /// </summary>
     /// <remarks>
     /// The caller receives ownership of the returned byte array. Callers should dispose/clear the array if it contains sensitive data.
     /// </remarks>
-    byte[] Encode(ImageFormat format, ImageEncodeOptions? options = null);
+    byte[] Encode(ExportFormat format, ExportOptions? options = null);
 
     /// <summary>
-    /// Encodes the image to the specified stream.
+    /// Encodes the canvas to the specified stream.
     /// </summary>
     /// <remarks>
     /// The caller retains ownership and responsibility for the stream (e.g., flushing, disposal). This method does not close or dispose the stream.
     /// </remarks>
-    void Encode(Stream stream, ImageFormat format, ImageEncodeOptions? options = null);
+    void Encode(Stream stream, ExportFormat format, ExportOptions? options = null);
 
     /// <summary>
-    /// Asynchronously encodes the image to a byte array.
+    /// Asynchronously encodes the canvas to a byte array.
     /// </summary>
     /// <remarks>
-    /// Encoding is CPU-bound; use cancellationToken to allow cancellation of long-running operations on large images.
+    /// Encoding is CPU-bound; use cancellationToken to allow cancellation of long-running operations on large canvases.
     /// </remarks>
-    Task<byte[]> EncodeAsync(ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default);
+    Task<byte[]> EncodeAsync(ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Asynchronously encodes the image to the specified stream.
+    /// Asynchronously encodes the canvas to the specified stream.
     /// </summary>
     /// <remarks>
     /// The caller retains ownership of the stream. Like the synchronous variant, this method does not dispose or flush the stream.
     /// </remarks>
-    Task EncodeAsync(Stream stream, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default);
+    Task EncodeAsync(Stream stream, ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Encodes and saves the image to the specified file path.
+    /// Encodes and saves the canvas to the specified file path.
     /// </summary>
     /// <remarks>
     /// This method creates or overwrites the file. The file is flushed and closed before the method returns.
     /// </remarks>
-    void Save(string path, ImageFormat format, ImageEncodeOptions? options = null);
+    void Save(string path, ExportFormat format, ExportOptions? options = null);
 
     /// <summary>
-    /// Asynchronously encodes and saves the image to the specified file path.
+    /// Asynchronously encodes and saves the canvas to the specified file path.
     /// </summary>
     /// <remarks>
     /// The file is flushed and closed asynchronously. Use cancellationToken to cancel the operation.
     /// </remarks>
-    Task SaveAsync(string path, ImageFormat format, ImageEncodeOptions? options = null, CancellationToken cancellationToken = default);
+    Task SaveAsync(string path, ExportFormat format, ExportOptions? options = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Generic extension of IImage to support static factory methods (C# 11+).
+/// Generic extension of ICanvas to support static factory methods (C# 11+).
 /// </summary>
 /// <remarks>
 /// This interface enables factory methods that return the concrete type (TSelf) rather than the interface type.
-/// Useful for immutable or specialized image implementations.
+/// Useful for immutable or specialized canvas implementations.
 /// </remarks>
-public interface IImage<TSelf> : IImage where TSelf : IImage<TSelf>
+public interface ICanvas<TSelf> : ICanvas where TSelf : ICanvas<TSelf>
 {
     /// <summary>
     /// Creates a new empty image with the specified dimensions.

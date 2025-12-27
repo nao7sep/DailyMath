@@ -81,7 +81,7 @@ public sealed class WpfRenderer : IRenderer
         DrawRectangle(region, borderColor, fillColor, borderThickness);
     }
 
-    public void DrawImage(Element target, IImage image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit)
+    public void DrawImage(Element target, ICanvas image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit)
     {
         var region = target.GetAbsoluteRegion();
         var contentRegion = LayoutCalculator.ApplyPadding(region, target.Padding, target.GetEffectiveDpi());
@@ -177,14 +177,14 @@ public sealed class WpfRenderer : IRenderer
         _dc.DrawLine(pen, new WPoint(start.X, start.Y), new WPoint(end.X, end.Y));
     }
 
-    public void DrawImage(Region region, IImage image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit)
+    public void DrawImage(Region region, ICanvas image, ContentAlignment alignment, ImageScaling scaling = ImageScaling.Fit)
     {
         if (image == null) return;
 
         BitmapSource bitmapSource;
-        if (image is WpfImage wpfImage)
+        if (image is WpfCanvas wpfCanvas)
         {
-            bitmapSource = wpfImage.Bitmap;
+            bitmapSource = wpfCanvas.Bitmap;
         }
         else
         {
